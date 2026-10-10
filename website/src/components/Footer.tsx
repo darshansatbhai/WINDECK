@@ -15,6 +15,7 @@ export default function Footer() {
                 src="/logo.png"
                 alt="WinDeck"
                 fill
+                sizes="28px"
                 className="object-contain"
               />
             </div>

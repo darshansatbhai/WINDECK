@@ -18,6 +18,7 @@ export default function Navbar() {
               src="/logo.png"
               alt="WinDeck"
               fill
+              sizes="32px"
               className="object-contain"
               priority
             />
