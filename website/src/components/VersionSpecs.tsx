@@ -81,7 +81,7 @@ export default function VersionSpecs() {
                   </div>
                 </div>
                 <span className="px-3 py-1 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 font-mono text-[12px] font-bold">
-                  v2.4.0+1
+                  v2.4.0
                 </span>
               </div>
 

@@ -96,7 +96,7 @@ export default function DualAppShowcase() {
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/70 border border-white/10">
-                    Version: v2.4.0+1
+                    Version: v2.4.0
                   </span>
                 </div>
 
@@ -110,7 +110,7 @@ export default function DualAppShowcase() {
                 <div className="mt-auto flex flex-col items-center gap-3">
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-[11px] font-medium text-green-400">
                     <CheckCircle className="w-3 h-3" />
-                    <span>v2.4.0+1 · Android 8.0+ Ready</span>
+                    <span>v2.4.0 · Android 8.0+ Ready</span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
