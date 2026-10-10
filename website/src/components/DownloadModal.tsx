@@ -24,11 +24,8 @@ export default function DownloadModal({
     setDownloadStarted(true);
     
     // Create direct download link to GitHub Releases
-    const link = document.createElement("a");
-    link.href = `https://github.com/darshansatbhai/WINDECK/releases/download/v2.4.0/${filename}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const url = `https://github.com/darshansatbhai/WINDECK/releases/download/v2.4.0/${filename}`;
+    window.open(url, "_blank");
 
     setTimeout(() => {
       setDownloadStarted(false);
