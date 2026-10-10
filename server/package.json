@@ -1,0 +1,21 @@
+{
+  "name": "windeck-server",
+  "version": "1.0.0",
+  "description": "WinDeck Windows Server",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "active-win": "^8.2.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "loudness": "^0.4.2",
+    "socket.io": "^4.6.1",
+    "socket.io-client": "^4.8.3",
+    "windows-media-sessions": "^1.0.3"
+  },
+  "devDependencies": {
+    "electron": "^42.3.3"
+  }
+}

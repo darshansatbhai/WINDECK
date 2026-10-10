@@ -1,0 +1,110 @@
+{
+  "pages": [
+    {
+      "id": "5a73128b-a501-4e05-b5e0-fc635161ce17",
+      "name": "Stream Deck ",
+      "isFavorite": false,
+      "tiles": [
+        {
+          "id": "f2f6bd7e-7add-404f-9f99-384036c644de",
+          "type": "system",
+          "label": "Volume Up",
+          "icon": "",
+          "action": "volume-up",
+          "payload": {}
+        },
+        {
+          "id": "360508e8-e9ae-42db-9a61-bcd414a419ec",
+          "type": "system",
+          "label": "Volume Down",
+          "icon": "",
+          "action": "volume-down",
+          "payload": {}
+        },
+        {
+          "id": "450bef66-e5d7-47d8-9680-2af25dd022d7",
+          "type": "system",
+          "label": "Mute",
+          "icon": "",
+          "action": "volume-mute",
+          "payload": {}
+        },
+        {
+          "id": "6e1b8fc4-07c9-421d-9c7a-a3dcd16fc50f",
+          "type": "app",
+          "label": "VALORANT",
+          "icon": "",
+          "action": "launch-app",
+          "payload": {
+            "path": "C:\\Riot Games\\Riot Client\\RiotClientServices.exe",
+            "iconPath": "C:/ProgramData/Riot Games/Metadata/valorant.live/valorant.live.ico"
+          }
+        },
+        {
+          "id": "c63c5e6a-4859-4fff-b56f-d49a4c8fda6e",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "5fe8c7d4-e70b-47ff-9ea8-b2fd486e9563",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "f9192c7d-a456-4c5f-958f-4d425b48cd18",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "35e703ff-1a41-49d2-92aa-de4bf1ec62f1",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "e660167d-226c-4f12-9322-54ce80e47946",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "c55acb1d-dd1f-45f3-a788-d76ce78c73c7",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "953fffa1-9591-491c-a5ae-afdba47baaa1",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        },
+        {
+          "id": "b1bd361a-7dcd-4055-8deb-4ee94566e68e",
+          "type": "empty",
+          "label": "",
+          "icon": "",
+          "action": null,
+          "payload": {}
+        }
+      ]
+    }
+  ]
+}
