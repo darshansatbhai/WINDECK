@@ -135,7 +135,7 @@ export default function Home() {
               </a>
 
               <a
-                href="https://github.com"
+                href="https://github.com/darshansatbhai/WINDECK"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 h-12 px-8 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.15] text-white text-[15px] font-semibold transition-all"

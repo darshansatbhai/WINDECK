@@ -122,7 +122,7 @@ export default function DualAppShowcase() {
                       <span>Download APK</span>
                     </button>
                     <a
-                      href="https://github.com"
+                      href="https://github.com/darshansatbhai/WINDECK"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white/70 hover:text-white text-[14px] font-medium transition-all"
