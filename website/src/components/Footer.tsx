@@ -23,7 +23,7 @@ export default function Footer() {
               win<span className="text-[#5E6AD2]">deck</span>
             </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/[0.06] text-white/50 border border-white/10">
-              v1.0.0
+              v2.4.0
             </span>
           </div>
 

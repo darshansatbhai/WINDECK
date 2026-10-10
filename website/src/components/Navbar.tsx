@@ -27,7 +27,7 @@ export default function Navbar() {
             win<span className="text-[#5E6AD2]">deck</span>
           </span>
           <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-white/[0.06] text-white/60 border border-white/10">
-            v1.0.0
+            v2.4.0
           </span>
         </a>
 

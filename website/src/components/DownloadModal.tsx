@@ -48,7 +48,7 @@ export default function DownloadModal({
         <div className="mb-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#5E6AD2]/40 bg-[#5E6AD2]/10 text-[11px] font-semibold text-[#8B97E8] mb-3">
             <Sparkles className="w-3 h-3 text-[#5E6AD2]" />
-            Official Release v1.0.0
+            Official Release v2.4.0
           </div>
           <h3 className="text-[26px] font-bold tracking-tight text-white">
             Download WinDeck
@@ -69,7 +69,7 @@ export default function DownloadModal({
             }`}
           >
             <Monitor className="w-4 h-4" />
-            <span>Windows PC (v1.0.0)</span>
+            <span>Windows PC (v2.4.0)</span>
           </button>
           <button
             onClick={() => setPlatform("android")}
@@ -80,7 +80,7 @@ export default function DownloadModal({
             }`}
           >
             <Smartphone className="w-4 h-4" />
-            <span>Android (v1.0.0+1)</span>
+            <span>Android (v2.4.0+1)</span>
           </button>
         </div>
 
@@ -96,20 +96,20 @@ export default function DownloadModal({
                 Automated installer with background system tray support and auto-start option.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck-Setup-1.0.0.exe · Windows 10 & 11 (64-bit)
+                WinDeck-Setup-2.4.0.exe · Windows 10 & 11 (64-bit)
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck-Setup-1.0.0.exe")}
+                onClick={() => handleDownload("WinDeck-Setup-2.4.0.exe")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >
                 {downloadStarted ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-emerald-300" />
-                    <span>Download Started (v1.0.0)...</span>
+                    <span>Download Started (v2.4.0)...</span>
                   </>
                 ) : (
                   <>
@@ -138,26 +138,26 @@ export default function DownloadModal({
             <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-white">WinDeck Mobile APK</span>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">v1.0.0+1</span>
+                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">v2.4.0+1</span>
               </div>
               <p className="text-[12px] text-white/40">
                 Universal Android package. Supports phones and tablets running Android 8.0 or later.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck-v1.0.0.apk · Flutter Core Engine
+                WinDeck-v2.4.0.apk · Flutter Core Engine
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck-v1.0.0.apk")}
+                onClick={() => handleDownload("WinDeck-v2.4.0.apk")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >
                 {downloadStarted ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-emerald-300" />
-                    <span>Download Started (v1.0.0+1)...</span>
+                    <span>Download Started (v2.4.0+1)...</span>
                   </>
                 ) : (
                   <>
