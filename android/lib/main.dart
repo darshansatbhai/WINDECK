@@ -61,7 +61,6 @@ class _WinDeckAppState extends State<WinDeckApp> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _requestNotificationPermission();
       _checkForUpdate();
     });
   }
@@ -122,7 +121,8 @@ class _WinDeckAppState extends State<WinDeckApp> {
   }
 
   Future<void> _requestNotificationPermission() async {
-    final status = await Permission.notification.status;
+    // Disabled: User requested not to show notification permission prompt
+    return;
     if (status.isGranted || status.isPermanentlyDenied) return;
 
     final ctx = navigatorKey.currentContext;
