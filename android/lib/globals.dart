@@ -1,2 +1,3 @@
-class Globals {
-  static String appVersion = "2.3.9"; }
+﻿class Globals {
+  static String appVersion = "2.4.0";
+}

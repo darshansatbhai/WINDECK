@@ -114,7 +114,7 @@
             </div>
             <span class="text-sm font-bold tracking-tight">win<span class="text-[#0078d4]">deck</span></span>
             <span
-                class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white/40 ml-1 app-version-str">v2.3.10</span>
+                class="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-white/40 ml-1 app-version-str">v2.4.0</span>
         </div>
     </div>
 
@@ -157,7 +157,7 @@
             <div class="mt-auto mb-4 px-2 w-full">
                 <div class="text-center sm:text-left sm:pl-3">
                     <span class="text-[10px] text-white/30 font-bold uppercase tracking-widest block">Version</span>
-                    <span class="text-[11px] text-white/50 font-medium app-version-str">v2.3.10</span>
+                    <span class="text-[11px] text-white/50 font-medium app-version-str">v2.4.0</span>
                 </div>
             </div>
         </div>
@@ -237,7 +237,10 @@
                             <span class="text-xs text-white/50">Manual Room ID</span>
                             <span id="encoded-room-id" class="text-sm font-bold mono text-white">---</span>
                         </div>
-
+                        <div class="flex flex-col items-center justify-center bg-white/5 border border-white/5 rounded-xl p-4 mb-6">
+                            <span class="text-xs text-white/50 mb-2">Scan QR to Connect</span>
+                            <img id="qr-code-img" src="" style="width: 150px; height: 150px; display: none; border-radius: 12px;" />
+                        </div>
 
                         <div class="mt-auto border-t border-white/5 pt-4">
                             <div class="flex items-center justify-between mb-4">
@@ -567,7 +570,7 @@
                         </div>
                         <div class="flex flex-col">
                             <span class="text-lg font-bold text-white">WinDeck (Desktop)</span>
-                            <span class="text-sm text-white/50 app-version-str">v2.3.10</span>
+                            <span class="text-sm text-white/50 app-version-str">v2.4.0</span>
                         </div>
                     </div>
                     <p class="text-sm text-white/60 leading-relaxed mb-6">
@@ -872,7 +875,7 @@
                     </div>
 
                     <div class="border-t border-white/5 pt-4 mt-4 flex items-center justify-between">
-                        <div class="text-xs text-white/30 app-version-full-str">WinDeck v2.3.10 • Made with ❤️ for Windows</div>
+                        <div class="text-xs text-white/30 app-version-full-str">WinDeck v2.4.0 • Made with ❤️ for Windows</div>
                         <div class="text-xs text-white/20">© 2025 WinDeck</div>
                     </div>
                 </div>
@@ -928,7 +931,7 @@
                     </svg>
                 </div>
                 <h3 class="text-2xl font-bold text-white tracking-tight">What's New in <span
-                        class="text-[#0078d4] app-version-str">v2.3.10</span></h3>
+                        class="text-[#0078d4] app-version-str">v2.4.0</span></h3>
             </div>
 
             <div class="flex flex-col gap-5 relative z-10">
@@ -1158,7 +1161,7 @@
                 }).catch(e => console.error('Failed to get app version:', e));
             }
 
-            // Check and show What's New modal for v2.3.10
+            // Check and show What's New modal for v2.4.0
             if (localStorage.getItem('shown_v2_3_8_whatsnew') !== 'true') {
                 document.getElementById('whats-new-modal').classList.remove('hidden');
             }
