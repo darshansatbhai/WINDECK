@@ -35,7 +35,7 @@ export default function Footer() {
             <a href="#how-it-works" className="hover:text-white transition-colors">How it works</a>
             <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
             <a
-              href="https://github.com"
+              href="https://github.com/darshansatbhai/WINDECK"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-white transition-colors"

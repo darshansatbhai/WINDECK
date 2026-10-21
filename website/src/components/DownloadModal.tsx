@@ -22,7 +22,11 @@ export default function DownloadModal({
 
   const handleDownload = (filename: string) => {
     setDownloadStarted(true);
-    // Trigger download simulation or actual file if available
+    
+    // Create direct download link to GitHub Releases
+    const url = `https://github.com/darshansatbhai/WINDECK/releases/download/v2.4.0/${filename}`;
+    window.open(url, "_blank");
+
     setTimeout(() => {
       setDownloadStarted(false);
       onClose();
@@ -80,7 +84,7 @@ export default function DownloadModal({
             }`}
           >
             <Smartphone className="w-4 h-4" />
-            <span>Android (v2.4.0+1)</span>
+            <span>Android (v2.4.0)</span>
           </button>
         </div>
 
@@ -96,13 +100,13 @@ export default function DownloadModal({
                 Automated installer with background system tray support and auto-start option.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck-Setup-2.4.0.exe · Windows 10 & 11 (64-bit)
+                WinDeck_Server_Setup_v2.4.0.exe · Windows 10 & 11 (64-bit)
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck-Setup-2.4.0.exe")}
+                onClick={() => handleDownload("WinDeck_Server_Setup_v2.4.0.exe")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >
@@ -120,7 +124,7 @@ export default function DownloadModal({
               </button>
 
               <a
-                href="https://github.com"
+                href="https://github.com/darshansatbhai/WINDECK/releases"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-white/70 hover:text-white font-medium text-[13px] flex items-center justify-center gap-2 transition-all"
@@ -138,26 +142,26 @@ export default function DownloadModal({
             <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-semibold text-white">WinDeck Mobile APK</span>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">v2.4.0+1</span>
+                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">v2.4.0</span>
               </div>
               <p className="text-[12px] text-white/40">
                 Universal Android package. Supports phones and tablets running Android 8.0 or later.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck-v2.4.0.apk · Flutter Core Engine
+                WinDeck_App_v2.4.0.apk · Flutter Core Engine
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck-v2.4.0.apk")}
+                onClick={() => handleDownload("WinDeck_App_v2.4.0.apk")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >
                 {downloadStarted ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-emerald-300" />
-                    <span>Download Started (v2.4.0+1)...</span>
+                    <span>Download Started (v2.4.0)...</span>
                   </>
                 ) : (
                   <>
@@ -168,7 +172,7 @@ export default function DownloadModal({
               </button>
 
               <a
-                href="https://github.com"
+                href="https://github.com/darshansatbhai/WINDECK"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full h-11 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.1] text-white/70 hover:text-white font-medium text-[13px] flex items-center justify-center gap-2 transition-all"

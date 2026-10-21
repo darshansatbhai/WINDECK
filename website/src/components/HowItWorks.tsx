@@ -14,7 +14,7 @@ export default function HowItWorks() {
     {
       num: "02",
       title: "Connect over Wi-Fi",
-      desc: "Same local network. WinDeck generates a simple 6-digit OTP code. Enter it once to create an authenticated local link.",
+      desc: "Same local network. WinDeck generates an instant QR code and 6-digit OTP. Scan or enter it once to pair.",
       color: "#22c55e",
       bgBadge: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
     },

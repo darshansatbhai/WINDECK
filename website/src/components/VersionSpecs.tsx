@@ -62,8 +62,8 @@ export default function VersionSpecs() {
             </div>
 
             <div className="mt-8 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-white/30 font-mono">
-              <span>windeck-server@1.0.0</span>
-              <span>Port: 5000 (Local)</span>
+              <span>windeck-server@2.4.0</span>
+              <span>Port: 3000 (Local)</span>
             </div>
           </div>
 
@@ -81,7 +81,7 @@ export default function VersionSpecs() {
                   </div>
                 </div>
                 <span className="px-3 py-1 rounded-full bg-green-500/20 border border-green-500/40 text-green-400 font-mono text-[12px] font-bold">
-                  v2.4.0+1
+                  v2.4.0
                 </span>
               </div>
 
@@ -110,7 +110,7 @@ export default function VersionSpecs() {
             </div>
 
             <div className="mt-8 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-white/30 font-mono">
-              <span>windeck@1.0.0+1</span>
+              <span>windeck@2.4.0+1</span>
               <span>Local Wi-Fi Client</span>
             </div>
           </div>

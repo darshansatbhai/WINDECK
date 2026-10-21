@@ -53,7 +53,7 @@ export default function Navbar() {
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <a
-            href="https://github.com"
+            href="https://github.com/darshansatbhai/WINDECK"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-white/[0.12] text-[13px] font-medium text-white/70 hover:text-white hover:border-white/30 transition-all"

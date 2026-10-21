@@ -96,7 +96,7 @@ export default function DualAppShowcase() {
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-white/[0.06] text-white/70 border border-white/10">
-                    Version: v2.4.0+1
+                    Version: v2.4.0
                   </span>
                 </div>
 
@@ -110,7 +110,7 @@ export default function DualAppShowcase() {
                 <div className="mt-auto flex flex-col items-center gap-3">
                   <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-[11px] font-medium text-green-400">
                     <CheckCircle className="w-3 h-3" />
-                    <span>v2.4.0+1 · Android 8.0+ Ready</span>
+                    <span>v2.4.0 · Android 8.0+ Ready</span>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
@@ -122,7 +122,7 @@ export default function DualAppShowcase() {
                       <span>Download APK</span>
                     </button>
                     <a
-                      href="https://github.com"
+                      href="https://github.com/darshansatbhai/WINDECK"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-white/70 hover:text-white text-[14px] font-medium transition-all"
@@ -161,7 +161,7 @@ export default function DualAppShowcase() {
                   <div className="flex flex-col gap-2.5 text-[11px]">
                     <div className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-white/[0.04]">
                       <span className="text-white/50">Status</span>
-                      <span className="text-green-400 font-medium">● Online (Port 5000)</span>
+                      <span className="text-green-400 font-medium">● Online (Port 3000)</span>
                     </div>
                     <div className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-white/[0.04]">
                       <span className="text-white/50">Pairing Code</span>
