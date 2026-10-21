@@ -40,15 +40,15 @@ export default function Home() {
 
             {/* Hero Main Headline */}
             <h1 className="text-[52px] sm:text-[76px] md:text-[96px] font-extrabold tracking-[-0.04em] leading-[1.02] max-w-4xl mb-6">
-              The controller<br />
-              <span className="bg-gradient-to-r from-[#5E6AD2] via-[#8B97E8] to-[#b6bdfa] bg-clip-text text-transparent">
-                you already own.
+              Your phone.<br />
+              <span className="bg-gradient-to-r from-[#4D88FF] via-[#7B8BFF] to-[#9A8CFF] bg-clip-text text-transparent">
+                Your control.
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-[17px] sm:text-[20px] text-white/50 max-w-xl leading-relaxed font-light mb-10">
-              Your Android phone is already a controller. WinDeck just turns it on. Low latency. Zero hardware cost. Free, forever.
+              Control your Windows PC right from your phone — custom macro buttons, instant app launcher, live media sessions, and presentation mode. 100% local, zero cloud.
             </p>
 
             {/* CTA Buttons */}
