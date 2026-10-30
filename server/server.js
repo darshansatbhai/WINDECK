@@ -13,6 +13,7 @@ const appDiscovery = require('./modules/appDiscovery');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const crypto = require('crypto');
 const { app: electronApp, clipboard, shell } = require('electron');
 
 
@@ -28,7 +29,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
-const PORT = 3000;
+const PORT = Number(process.env.WINDECK_PORT || 3000);
 const BROADCAST_PORT = 3001;
 const serverName = os.hostname();
 const SERVER_VERSION = '2.4.0';
@@ -56,6 +57,21 @@ function generateEncodedRoomId() {
     return `${hex.slice(0, 4)}-${hex.slice(4)}`; // e.g., C0A8-0064
 }
 
+function isLocalAddress(address) {
+    const ip = String(address || '').replace(/^::ffff:/, '');
+    if (ip === '127.0.0.1' || ip === '::1') return true;
+    return Object.values(os.networkInterfaces()).flat().some((iface) => iface && iface.address === ip);
+}
+
+function isSameOrigin(headers) {
+    try {
+        const origin = new URL(headers.origin);
+        return origin.protocol === 'http:' && origin.host === headers.host;
+    } catch {
+        return false;
+    }
+}
+
 // Connection Callbacks
 // OTP and Room management
 let currentOtp = '';
@@ -64,15 +80,30 @@ let udpBroadcastInterval = null;
 let otpCallback = null;
 let connectionCallback = null;
 let telemetryCallback = null;
+let layoutCallback = null;
 let activeClientSocket = null;
 let standbyTimeout = null;
 let currentConnectedDevice = null;
 let lastSetFromPhone = '';
 let lastPolledClipboard = '';
+let stopping = false;
+const failedAuthByAddress = new Map();
+const downloadOffers = new Map();
+
+function clientAddress(address) {
+    return String(address || '').replace(/^::ffff:/, '');
+}
+
+function recordFailedAuth(address) {
+    const now = Date.now();
+    const previous = failedAuthByAddress.get(address);
+    const count = previous && now - previous.lastFailure < 5 * 60 * 1000 ? previous.count + 1 : 1;
+    failedAuthByAddress.set(address, { count, lastFailure: now, lockoutUntil: count >= 5 ? now + 5 * 60 * 1000 : 0 });
+    return count;
+}
 
 function generateOTP() {
-    currentOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    logToFile(`[OTP] Generated Pairing Code: ${currentOtp}`);
+    currentOtp = crypto.randomInt(100000, 1000000).toString();
     
     if (otpCallback) {
         otpCallback({ otp: currentOtp, ip: getLocalIp(), port: PORT });
@@ -179,24 +210,28 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // DropZone file upload endpoint
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post('/upload', (req, res, next) => {
+    const address = clientAddress(req.socket.remoteAddress);
+    const attempts = failedAuthByAddress.get(address);
+    if (attempts && Date.now() < attempts.lockoutUntil) return res.status(429).send('Too many failed attempts');
     const authHeader = req.headers['x-windeck-auth'];
     const cleanAuthHeader = String(authHeader || '').trim();
     const cleanCurrent = String(currentOtp || '').trim();
     
     if (cleanAuthHeader !== cleanCurrent || !cleanCurrent) {
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
+        recordFailedAuth(address);
         return res.status(401).send('Unauthorized');
     }
+    failedAuthByAddress.delete(address);
+    next();
+}, upload.single('file'), (req, res) => {
 
     if (!req.file) {
         return res.status(400).send('No file uploaded');
     }
 
     logToFile(`[DropZone] File received: ${req.file.originalname}`);
-    io.emit('file-received', { filename: req.file.originalname, path: req.file.path });
+    broadcastAuthenticated('file-received', { filename: req.file.originalname, path: req.file.path });
     
     // Reveal in Windows Explorer
     shell.showItemInFolder(req.file.path);
@@ -206,15 +241,17 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 // PC to Phone File Download Endpoint
 app.get('/download-file', (req, res) => {
-    const filePath = req.query.path;
-    if (!filePath || !fs.existsSync(filePath)) {
+    const offer = downloadOffers.get(req.query.token);
+    if (!offer || offer.expiresAt < Date.now() || offer.path !== req.query.path || !fs.existsSync(offer.path)) {
         return res.status(404).send('File not found');
     }
-    res.download(filePath);
+    res.download(offer.path);
 });
 
 // Camera View Endpoint for OBS Virtual Camera
 app.get('/camera-view', (req, res) => {
+    if (!isLocalAddress(req.socket.remoteAddress)) return res.status(403).send('Camera view is only available on the PC');
+    res.setHeader('X-Frame-Options', 'DENY');
     res.send(`
         <!DOCTYPE html>
         <html>
@@ -231,7 +268,7 @@ app.get('/camera-view', (req, res) => {
             <img id="cam" src="" style="display:none;" />
             <script src="/socket.io/socket.io.js"></script>
             <script>
-                const socket = io();
+                const socket = io({ auth: { cameraView: true } });
                 const img = document.getElementById('cam');
                 const status = document.getElementById('status');
                 
@@ -276,9 +313,9 @@ app.get('/icon', async (req, res) => {
 io.on('connection', (socket) => {
     logToFile('[Socket] Client connected, awaiting authentication:', socket.id);
     socket.authenticated = false;
+    socket.cameraViewer = socket.handshake.auth?.cameraView === true && isLocalAddress(socket.handshake.address) && isSameOrigin(socket.handshake.headers);
 
     // Handle authentication using OTP    // End-to-End Encryption Setup
-    const crypto = require('crypto');
     const algorithm = 'aes-256-cbc';
     const getEncryptionKey = () => crypto.createHash('sha256').update(currentOtp + 'windeck_salt').digest();
 
@@ -301,6 +338,7 @@ io.on('connection', (socket) => {
     }
 
     const originalEmit = socket.emit;
+    socket.emitCameraFrame = (frame) => originalEmit.call(socket, 'broadcast-camera-frame', frame);
     socket.emit = function(eventName, ...args) {
         if (eventName === 'authenticated' || eventName === 'auth_error' || eventName === 'unauthorized') {
             return originalEmit.apply(this, [eventName, ...args]);
@@ -312,6 +350,7 @@ io.on('connection', (socket) => {
     socket.use((packet, next) => {
         const eventName = packet[0];
         if (eventName === 'authenticate') return next();
+        if (!socket.authenticated) return next(new Error('Authentication required'));
         
         try {
             for (let i = 1; i < packet.length; i++) {
@@ -326,20 +365,19 @@ io.on('connection', (socket) => {
         }
     });
 
-    let failedAttempts = 0;
-    let lockoutUntil = 0;
-
     socket.on('authenticate', (data) => {
-        if (Date.now() < lockoutUntil) {
-            const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
-            socket.emit('authenticated', { success: false, error: `Too many failed attempts. PC locked down. Try again in ${remaining}s.` });
+        const address = clientAddress(socket.handshake.address);
+        const attempts = failedAuthByAddress.get(address);
+        if (attempts && Date.now() < attempts.lockoutUntil) {
+            const remaining = Math.ceil((attempts.lockoutUntil - Date.now()) / 1000);
+            socket.emit('authenticated', { success: false, error: `Too many failed attempts. Try again in ${remaining}s.` });
             socket.disconnect();
             return;
         }
 
-        const submittedOtp = typeof data === 'object' ? data.otp : data;
-        const deviceName = typeof data === 'object' ? data.deviceName : 'Mobile Device';
-        const clientVersion = typeof data === 'object' ? data.version : '1.0.0';
+        const submittedOtp = data && typeof data === 'object' ? data.otp : data;
+        const deviceName = data && typeof data === 'object' ? data.deviceName : 'Mobile Device';
+        const clientVersion = data && typeof data === 'object' ? data.version : '1.0.0';
 
         if (clientVersion !== SERVER_VERSION) {
             socket.emit('authenticated', { success: false, error: `Version mismatch. Server is ${SERVER_VERSION}, Client is ${clientVersion}. Please update.` });
@@ -351,8 +389,8 @@ io.on('connection', (socket) => {
         const cleanSubmitted = String(submittedOtp || '').trim();
         const cleanCurrent = String(currentOtp || '').trim();
 
-        if (cleanSubmitted === cleanCurrent) {
-            failedAttempts = 0;
+        if (cleanCurrent && cleanSubmitted === cleanCurrent) {
+            failedAuthByAddress.delete(address);
             socket.authenticated = true;
             activeClientSocket = socket;
             socket.deviceName = deviceName;
@@ -366,15 +404,11 @@ io.on('connection', (socket) => {
             sendAppList(socket);
             sendLayout(socket);
         } else {
-            failedAttempts++;
-            if (failedAttempts >= 5) {
-                logToFile(`[SECURITY] 5 consecutive failed attempts from socket ${socket.id}. Engaging Anti-Brute Force lockout.`);
-                systemControls.executeAction('lock');
-                lockoutUntil = Date.now() + (5 * 60 * 1000);
-                socket.emit('authenticated', { success: false, error: 'Anti-Brute Force triggered. PC is now locked. Try again in 5 minutes.' });
+            const count = recordFailedAuth(address);
+            if (count >= 5) {
+                socket.emit('authenticated', { success: false, error: 'Too many failed attempts. Try again in 5 minutes.' });
             } else {
-                socket.emit('authenticated', { success: false, error: `Incorrect pairing code. (${5 - failedAttempts} attempts remaining)` });
-                logToFile(`[Socket] Authentication failed for socket ${socket.id} (Attempt ${failedAttempts}/5)`);
+                socket.emit('authenticated', { success: false, error: `Incorrect pairing code. (${5 - count} attempts remaining)` });
             }
             socket.disconnect();
         }
@@ -388,6 +422,24 @@ io.on('connection', (socket) => {
     socket.on('get-layout', () => {
         if (!socket.authenticated) return;
         sendLayout(socket);
+    });
+
+    socket.on('save-layout', (layout) => {
+        if (!socket.authenticated) return;
+        const rejectLayout = () => socket.emit('layout-error', { message: 'Layout could not be saved on the PC.' });
+        if (!Array.isArray(layout) || layout.length < 1 || layout.length > 100) return rejectLayout();
+        if (!layout.every((page) => page && typeof page.id === 'string' && typeof page.name === 'string' && Array.isArray(page.tiles) && page.tiles.length <= 200 && page.tiles.every((tile) => tile && typeof tile === 'object'))) return rejectLayout();
+        try {
+            const data = JSON.stringify(layout);
+            if (Buffer.byteLength(data, 'utf8') > 1024 * 1024) return rejectLayout();
+            const layoutPath = path.join(electronApp.getPath('userData'), 'layout.json');
+            fs.writeFileSync(layoutPath, data, 'utf8');
+            broadcastAuthenticated('sync-layout', layout);
+            if (layoutCallback) layoutCallback(layout);
+        } catch (error) {
+            logToFile(`[Layout] Failed to save phone layout: ${error.message}`);
+            socket.emit('layout-error', { message: 'Could not save layout on PC.' });
+        }
     });
 
     socket.on('launch-app', (exePath) => {
@@ -441,12 +493,14 @@ io.on('connection', (socket) => {
     // Phase 6: Webcam Bridge Frame Receiver
     socket.on('camera-frame', (base64Frame) => {
         if (!socket.authenticated) return;
-        // Broadcast to all clients (including the /camera-view page)
-        io.emit('broadcast-camera-frame', base64Frame);
+        io.sockets.sockets.forEach((viewer) => {
+            if (viewer.cameraViewer) viewer.emitCameraFrame(base64Frame);
+        });
     });
 
     socket.on('disconnect', () => {
         logToFile('[Socket] Client disconnected (entering standby)');
+        if (stopping) return;
         if (socket === activeClientSocket) {
             activeClientSocket = null;
             
@@ -487,12 +541,18 @@ function sendLayout(socket) {
     }
 }
 
-// Start Monitors
-startMediaMonitor(io);
-startWindowMonitor(io);
+function broadcastAuthenticated(event, data) {
+    io.sockets.sockets.forEach((socket) => {
+        if (socket.authenticated) socket.emit(event, data);
+    });
+}
+
+const authenticatedEmitter = { emit: broadcastAuthenticated };
+let stopMediaMonitor;
+let stopWindowMonitor;
 
 // System Telemetry loop
-setInterval(() => {
+const telemetryInterval = setInterval(() => {
     const cpus = os.cpus();
     let user = 0, nice = 0, sys = 0, idle = 0, irq = 0;
     for (let cpu in cpus) {
@@ -513,13 +573,13 @@ setInterval(() => {
     };
 
     if (activeClientSocket && activeClientSocket.authenticated) {
-        io.emit('status', data);
+        broadcastAuthenticated('status', data);
         
         try {
             const currentClipboard = clipboard.readText();
             if (currentClipboard !== lastPolledClipboard && currentClipboard !== lastSetFromPhone) {
                 lastPolledClipboard = currentClipboard;
-                io.emit('clipboard-update', currentClipboard);
+                broadcastAuthenticated('clipboard-update', currentClipboard);
             }
         } catch (e) { }
     }
@@ -537,12 +597,37 @@ server.on('error', (err) => {
     }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-    logToFile(`[HTTP] WinDeck Server listening on port ${PORT}`);
-});
-
 // Exports for Electron integration
 module.exports = {
+    startServer: () => new Promise((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(PORT, '0.0.0.0', () => {
+            server.removeListener('error', reject);
+            try {
+                stopMediaMonitor = startMediaMonitor(authenticatedEmitter);
+                stopWindowMonitor = startWindowMonitor(authenticatedEmitter);
+                logToFile(`[HTTP] WinDeck Server listening on port ${PORT}`);
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }),
+    stopServer: async () => {
+        stopping = true;
+        currentOtp = '';
+        downloadOffers.clear();
+        if (standbyTimeout) clearTimeout(standbyTimeout);
+        stopBroadcasting();
+        clearInterval(telemetryInterval);
+        if (stopWindowMonitor) stopWindowMonitor();
+        if (stopMediaMonitor) await stopMediaMonitor();
+        systemControls.stopPersistentShell();
+        io.disconnectSockets(true);
+        await new Promise((resolve) => io.close(resolve));
+        udpSocket.close();
+        bonjour.destroy();
+    },
     createRoom: (name) => {
         startBroadcasting(name);
         generateOTP();
@@ -565,6 +650,7 @@ module.exports = {
     onOtp: (cb) => { otpCallback = cb; },
     onClientConnection: (cb) => { connectionCallback = cb; },
     onTelemetry: (cb) => { telemetryCallback = cb; },
+    onLayoutChanged: (cb) => { layoutCallback = cb; },
     getAppList: async () => {
         return await appDiscovery.getStartMenuApps();
     },
@@ -578,9 +664,11 @@ module.exports = {
     sendFileToPhone: (filePath) => {
         if (activeClientSocket && activeClientSocket.authenticated) {
             const ip = getLocalIp();
-            const downloadUrl = `http://${ip}:${PORT}/download-file?path=${encodeURIComponent(filePath)}`;
+            const token = crypto.randomBytes(24).toString('hex');
+            downloadOffers.set(token, { path: filePath, expiresAt: Date.now() + 10 * 60 * 1000 });
+            const downloadUrl = `http://${ip}:${PORT}/download-file?path=${encodeURIComponent(filePath)}&token=${token}`;
             activeClientSocket.emit('file-offer', downloadUrl);
-            logToFile(`[DropZone] Sent file-offer to phone: ${downloadUrl}`);
+            logToFile('[DropZone] Sent file offer to phone.');
         } else {
             logToFile(`[DropZone] Cannot send file, no authenticated client connected.`);
         }

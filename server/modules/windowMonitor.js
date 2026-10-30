@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
 let previousApp = '';
 
@@ -38,7 +38,7 @@ function startWindowMonitor(io) {
         }
     `;
 
-    psProcess = exec(`powershell -NoProfile -Command "${psScript.replace(/\n/g, ' ')}"`);
+    psProcess = spawn('powershell.exe', ['-NoProfile', '-EncodedCommand', Buffer.from(psScript, 'utf16le').toString('base64')], { windowsHide: true });
     console.log('[WindowMonitor] Active window polling started via PowerShell');
 
     psProcess.stdout.on('data', (data) => {
@@ -60,6 +60,11 @@ function startWindowMonitor(io) {
     psProcess.stderr.on('data', (data) => {
         // Ignore minor PS errors
     });
+    return () => {
+        if (psProcess) psProcess.kill();
+        psProcess = null;
+        previousApp = '';
+    };
 }
 
 module.exports = { startWindowMonitor };

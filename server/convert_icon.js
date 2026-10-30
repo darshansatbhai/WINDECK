@@ -1,20 +1,14 @@
-const Jimp = require('jimp');
-const pngToIco = require('png-to-ico');
 const fs = require('fs');
+const path = require('path');
+const pngToIco = require('png-to-ico').default;
 
 async function convert() {
-  try {
-    const image = await Jimp.read('icon.jpg');
-    image.resize(256, 256);
-    await image.writeAsync('icon.png');
-    console.log('Converted to PNG');
-    
-    const buf = await pngToIco('icon.png');
-    fs.writeFileSync('icon.ico', buf);
-    console.log('Converted to ICO');
-  } catch (err) {
-    console.error(err);
-  }
+    const icon = await pngToIco(path.join(__dirname, 'icon.png'));
+    fs.writeFileSync(path.join(__dirname, 'icon.ico'), icon);
+    console.log('Generated WinDeck Windows icon from icon.png');
 }
 
-convert();
+convert().catch((error) => {
+    console.error('Failed to generate Windows icon:', error);
+    process.exitCode = 1;
+});

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../globals.dart';
 import '../providers/connection_provider.dart';
 import '../providers/pages_provider.dart';
+import '../providers/appearance_provider.dart';
 import '../services/update_service.dart';
 
 // ─── Main Settings Screen ─────────────────────────────────────────────────────
@@ -135,16 +134,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _sectionLabel(String text) => Padding(
     padding: const EdgeInsets.fromLTRB(4, 16, 0, 8),
-    child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0078d4), letterSpacing: 1.5)),
+    child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.watch<AppearanceProvider>().accent, letterSpacing: 1.5)),
   );
 
   @override
   Widget build(BuildContext context) {
     final conn = context.watch<ConnectionProvider>();
     final pages = context.watch<PagesProvider>();
+    final appearance = context.watch<AppearanceProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0C14),
+      backgroundColor: appearance.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -166,18 +166,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               margin: const EdgeInsets.only(bottom: 8, top: 8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [const Color(0xFF0078d4).withValues(alpha: 0.15), Colors.transparent],
+                  colors: [appearance.accent.withValues(alpha: 0.15), Colors.transparent],
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF0078d4).withValues(alpha: 0.2)),
+                border: Border.all(color: appearance.accent.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
                   Container(
                     width: 44, height: 44,
-                    decoration: BoxDecoration(color: const Color(0xFF0078d4).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.phone_android_rounded, color: Color(0xFF0078d4), size: 22),
+                    decoration: BoxDecoration(color: appearance.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                    child: Icon(Icons.phone_android_rounded, color: appearance.accent, size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -198,6 +198,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
+            _sectionLabel('APPEARANCE'),
+            _settingsTile(icon: Icons.palette_rounded, iconColor: appearance.accent, title: 'Themes & Customization', subtitle: 'Colors, grid and tile style on this phone', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsAppearanceScreen()))),
+
             if (conn.isConnected) ...[
               _sectionLabel('PREFERENCES'),
               _settingsTile(icon: Icons.tune_rounded, iconColor: Colors.orangeAccent, title: 'Preferences', subtitle: 'Haptics, sound, clipboard, auto-switch', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPreferencesScreen()))),
@@ -208,7 +211,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             _sectionLabel('PRIVACY & INFO'),
             _settingsTile(icon: Icons.shield_rounded, iconColor: Colors.greenAccent, title: 'Data & Privacy', subtitle: '100% local — no data leaves your network', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsDataPrivacyScreen()))),
-            _settingsTile(icon: Icons.notifications_rounded, iconColor: const Color(0xFF0078d4), title: 'Notifications', subtitle: 'Connection and file alerts', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsNotificationsScreen()))),
 
             _sectionLabel('HELP & LEGAL'),
             _settingsTile(icon: Icons.help_rounded, iconColor: Colors.cyanAccent, title: 'How to Use', subtitle: 'Step-by-step guide to WinDeck', onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsHelpScreen()))),
@@ -314,6 +316,127 @@ class SettingsPreferencesScreen extends StatelessWidget {
   }
 }
 
+// ─── Appearance Sub-Screen ────────────────────────────────────────────────────
+class SettingsAppearanceScreen extends StatefulWidget {
+  const SettingsAppearanceScreen({super.key});
+
+  @override
+  State<SettingsAppearanceScreen> createState() => _SettingsAppearanceScreenState();
+}
+
+class _SettingsAppearanceScreenState extends State<SettingsAppearanceScreen> {
+  late final TextEditingController _accentController;
+  late final TextEditingController _backgroundController;
+  String? _error;
+
+  String _hex(Color color) => '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase()}';
+
+  @override
+  void initState() {
+    super.initState();
+    final appearance = context.read<AppearanceProvider>();
+    _accentController = TextEditingController(text: _hex(appearance.accent));
+    _backgroundController = TextEditingController(text: _hex(appearance.background));
+    appearance.ready.then((_) {
+      if (!mounted) return;
+      _updateFields(appearance);
+    });
+  }
+
+  void _updateFields(AppearanceProvider appearance) {
+    _accentController.text = _hex(appearance.accent);
+    _backgroundController.text = _hex(appearance.background);
+    setState(() => _error = null);
+  }
+
+  Color? _parseColor(String input) {
+    final value = input.trim().replaceFirst('#', '');
+    if (!RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(value)) return null;
+    return Color(0xFF000000 | int.parse(value, radix: 16));
+  }
+
+  void _applyColors(AppearanceProvider appearance) {
+    final accent = _parseColor(_accentController.text);
+    final background = _parseColor(_backgroundController.text);
+    if (accent == null || background == null) {
+      setState(() => _error = 'Use six-digit hex colors, for example #0078D4.');
+    } else if (!appearance.setCustomColors(accent, background)) {
+      setState(() => _error = 'Choose a dark background and a visible accent for readable text.');
+    } else {
+      _updateFields(appearance);
+    }
+  }
+
+  @override
+  void dispose() {
+    _accentController.dispose();
+    _backgroundController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appearance = context.watch<AppearanceProvider>();
+    return _SubScreen(
+      title: 'Themes & Customization',
+      icon: Icons.palette_rounded,
+      iconColor: appearance.accent,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text('Saved on this phone. Desktop appearance is set separately.', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12)),
+        ),
+        _SubSection(label: 'THEMES', children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: AppearanceProvider.presets.map((preset) => ChoiceChip(
+                label: Text(preset.label),
+                avatar: CircleAvatar(backgroundColor: preset.accent, radius: 8),
+                selected: appearance.preset == preset.id,
+                onSelected: (_) { appearance.selectPreset(preset); _updateFields(appearance); },
+              )).toList(),
+            ),
+          ),
+        ]),
+        _SubSection(label: 'CUSTOM COLORS', children: [
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: TextField(controller: _accentController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Accent #RRGGBB'))),
+                const SizedBox(width: 12),
+                Expanded(child: TextField(controller: _backgroundController, style: const TextStyle(color: Colors.white), decoration: const InputDecoration(labelText: 'Background #RRGGBB'))),
+              ]),
+              if (_error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_error!, style: const TextStyle(color: Colors.redAccent, fontSize: 12))),
+              TextButton(onPressed: () => _applyColors(appearance), child: const Text('Apply Colors')),
+            ]),
+          ),
+        ]),
+        _SubSection(label: 'TILE LAYOUT', children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Row(children: [
+              const Expanded(child: Text('Columns', style: TextStyle(color: Colors.white))),
+              ...[2, 3, 4].map((value) => Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: ChoiceChip(label: Text('$value'), selected: appearance.columns == value, onSelected: (_) => appearance.setColumns(value)),
+              )),
+            ]),
+          ),
+          ListTile(title: const Text('Tile intensity', style: TextStyle(color: Colors.white)), subtitle: Slider(value: appearance.tileOpacity, min: 0.05, max: 0.30, divisions: 5, activeColor: appearance.accent, onChanged: appearance.setTileOpacity)),
+          ListTile(title: const Text('Corner roundness', style: TextStyle(color: Colors.white)), subtitle: Slider(value: appearance.tileRadius, min: 4, max: 32, divisions: 7, activeColor: appearance.accent, onChanged: appearance.setTileRadius)),
+          SwitchListTile(title: const Text('Show tile labels', style: TextStyle(color: Colors.white)), value: appearance.showLabels, activeThumbColor: appearance.accent, onChanged: appearance.setShowLabels),
+        ]),
+        const SizedBox(height: 12),
+        TextButton.icon(onPressed: () { appearance.reset(); _updateFields(appearance); }, icon: const Icon(Icons.restart_alt_rounded), label: const Text('Restore WinDeck defaults')),
+      ],
+    );
+  }
+}
+
 // ─── Pages Sub-Screen ─────────────────────────────────────────────────────────
 class SettingsPagesScreen extends StatefulWidget {
   final PagesProvider pages;
@@ -327,6 +450,7 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = context.watch<PagesProvider>();
+    final connected = context.watch<ConnectionProvider>().isConnected;
     return _SubScreen(
       title: 'Manage Pages',
       icon: Icons.layers_rounded,
@@ -334,21 +458,29 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-          child: Text('Drag ≡ to reorder. Tap ✏️ to rename. Custom pages can be deleted.',
+          child: Text(connected ? 'Add, duplicate, rename or reorder pages. Changes sync to your PC.' : 'Reconnect to your PC to edit and sync pages.',
               style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: OutlinedButton.icon(
+            onPressed: connected ? () => _addPage(context, pages) : null,
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Add Page'),
+          ),
         ),
         ReorderableListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: pages.pages.length,
           onReorder: (oldIndex, newIndex) {
-            pages.reorderPage(oldIndex, newIndex);
+            if (connected) pages.reorderPage(oldIndex, newIndex);
           },
           itemBuilder: (context, index) {
             final page = pages.pages[index];
             final isCustom = page.type == 'custom';
             return Container(
-              key: ValueKey(page.name + index.toString()),
+              key: ValueKey(page.id),
               margin: const EdgeInsets.only(bottom: 6),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
@@ -380,20 +512,26 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
                       ],
                     ),
                   ),
-                  if (isCustom) ...[
-                    IconButton(
-                      icon: const Icon(Icons.edit_rounded, color: Colors.white38, size: 18),
-                      onPressed: () => _renamePage(context, pages, index),
-                      padding: EdgeInsets.zero, constraints: const BoxConstraints(),
-                    ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      icon: const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 18),
-                      onPressed: () => _deletePage(context, pages, index),
-                      padding: EdgeInsets.zero, constraints: const BoxConstraints(),
-                    ),
-                  ] else
-                    Icon(Icons.lock_rounded, size: 14, color: Colors.white.withValues(alpha: 0.2)),
+                  IconButton(
+                    tooltip: 'Duplicate page',
+                    icon: const Icon(Icons.copy_rounded, color: Colors.white38, size: 18),
+                    onPressed: connected ? () => pages.duplicatePage(index) : null,
+                    padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    tooltip: 'Rename page',
+                    icon: const Icon(Icons.edit_rounded, color: Colors.white38, size: 18),
+                    onPressed: connected ? () => _renamePage(context, pages, index) : null,
+                    padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 12),
+                  IconButton(
+                    tooltip: 'Delete page',
+                    icon: const Icon(Icons.delete_rounded, color: Colors.redAccent, size: 18),
+                    onPressed: connected && pages.pages.length > 1 ? () => _deletePage(context, pages, index) : null,
+                    padding: EdgeInsets.zero, constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
             );
@@ -403,7 +541,33 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
     );
   }
 
+  void _addPage(BuildContext context, PagesProvider pages) {
+    showDialog(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        backgroundColor: const Color(0xFF161622),
+        title: const Text('Choose a page', style: TextStyle(color: Colors.white)),
+        children: [
+          for (final option in [('Blank Page', 'blank'), ('Media', 'media'), ('Productivity', 'productivity')])
+            SimpleDialogOption(
+              onPressed: () {
+                if (!context.read<ConnectionProvider>().isConnected) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reconnect to your PC to edit pages.')));
+                  return;
+                }
+                pages.addPage(option.$1 == 'Blank Page' ? 'New Page' : option.$1, template: option.$2);
+                Navigator.pop(ctx);
+              },
+              child: Text(option.$1, style: const TextStyle(color: Colors.white70)),
+            ),
+        ],
+      ),
+    );
+  }
+
   void _renamePage(BuildContext context, PagesProvider pages, int index) {
+    final pageId = pages.pages[index].id;
     final ctrl = TextEditingController(text: pages.pages[index].name);
     showDialog(
       context: context,
@@ -423,7 +587,16 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
           TextButton(
-            onPressed: () { if (ctrl.text.trim().isNotEmpty) pages.renamePage(index, ctrl.text.trim()); Navigator.pop(ctx); },
+            onPressed: () {
+              if (!context.read<ConnectionProvider>().isConnected) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reconnect to your PC to edit pages.')));
+                return;
+              }
+              final currentIndex = pages.pages.indexWhere((page) => page.id == pageId);
+              if (currentIndex >= 0 && ctrl.text.trim().isNotEmpty) pages.renamePage(currentIndex, ctrl.text.trim());
+              Navigator.pop(ctx);
+            },
             child: const Text('Save', style: TextStyle(color: Color(0xFF0078d4), fontWeight: FontWeight.bold)),
           ),
         ],
@@ -432,6 +605,7 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
   }
 
   void _deletePage(BuildContext context, PagesProvider pages, int index) {
+    final pageId = pages.pages[index].id;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -442,7 +616,16 @@ class _SettingsPagesScreenState extends State<SettingsPagesScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.white54))),
           TextButton(
-            onPressed: () { pages.deletePage(index); Navigator.pop(ctx); },
+            onPressed: () {
+              if (!context.read<ConnectionProvider>().isConnected) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reconnect to your PC to edit pages.')));
+                return;
+              }
+              final currentIndex = pages.pages.indexWhere((page) => page.id == pageId);
+              if (currentIndex >= 0) pages.deletePage(currentIndex);
+              Navigator.pop(ctx);
+            },
             child: const Text('Delete', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -509,103 +692,6 @@ class _PrivacyCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ─── Notifications Sub-Screen ─────────────────────────────────────────────────
-class SettingsNotificationsScreen extends StatefulWidget {
-  const SettingsNotificationsScreen({super.key});
-
-  @override
-  State<SettingsNotificationsScreen> createState() => _SettingsNotificationsScreenState();
-}
-
-class _SettingsNotificationsScreenState extends State<SettingsNotificationsScreen> {
-  bool _onConnect = true;
-  bool _onDisconnect = true;
-  bool _onFile = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() {
-      _onConnect = prefs.getBool('notif_connect') ?? true;
-      _onDisconnect = prefs.getBool('notif_disconnect') ?? true;
-      _onFile = prefs.getBool('notif_file') ?? false;
-    });
-    }
-  }
-
-  Future<void> _save(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
-  }
-
-  Future<void> _handleToggle(String key, bool currentValue, Function(bool) updateState) async {
-    if (currentValue) {
-      // Trying to turn it ON
-      var status = await Permission.notification.status;
-      if (!status.isGranted) {
-        status = await Permission.notification.request();
-      }
-      if (status.isGranted) {
-        updateState(true);
-        _save(key, true);
-      } else {
-        // Permission denied, can't turn on
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notification permission is required.')));
-        }
-        updateState(false);
-        _save(key, false);
-      }
-    } else {
-      // Turning off
-      updateState(false);
-      _save(key, false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _SubScreen(
-      title: 'Notifications',
-      icon: Icons.notifications_rounded,
-      iconColor: const Color(0xFF0078d4),
-      children: [
-        _SubSection(label: 'DEVICE EVENTS', children: [
-          SwitchListTile(
-            title: const Text('Device Connected', style: TextStyle(color: Colors.white)),
-            subtitle: Text('Alert when a phone pairs successfully', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
-            value: _onConnect,
-            activeThumbColor: const Color(0xFF0078d4),
-            onChanged: (v) => _handleToggle('notif_connect', v, (newVal) => setState(() => _onConnect = newVal)),
-          ),
-          SwitchListTile(
-            title: const Text('Device Disconnected', style: TextStyle(color: Colors.white)),
-            subtitle: Text('Alert when a paired phone disconnects', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
-            value: _onDisconnect,
-            activeThumbColor: const Color(0xFF0078d4),
-            onChanged: (v) => _handleToggle('notif_disconnect', v, (newVal) => setState(() => _onDisconnect = newVal)),
-          ),
-        ]),
-        _SubSection(label: 'FILE EVENTS', children: [
-          SwitchListTile(
-            title: const Text('File Received', style: TextStyle(color: Colors.white)),
-            subtitle: Text('Alert when a file arrives from your phone', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 12)),
-            value: _onFile,
-            activeThumbColor: const Color(0xFF0078d4),
-            onChanged: (v) => _handleToggle('notif_file', v, (newVal) => setState(() => _onFile = newVal)),
-          ),
-        ]),
-      ],
     );
   }
 }
@@ -930,7 +1016,7 @@ class _SubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0C0C14),
+      backgroundColor: context.watch<AppearanceProvider>().background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -968,7 +1054,7 @@ class _SubSection extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 12, 0, 4),
-          child: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0078d4), letterSpacing: 1.5)),
+          child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: context.watch<AppearanceProvider>().accent, letterSpacing: 1.5)),
         ),
         Container(
           decoration: BoxDecoration(
@@ -976,7 +1062,7 @@ class _SubSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
           ),
-          child: Column(children: children),
+          child: Material(type: MaterialType.transparency, child: Column(children: children)),
         ),
       ],
     );

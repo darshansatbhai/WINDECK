@@ -7,6 +7,29 @@ let mainWindow;
 let serverInstance;
 let tray = null;
 
+function initializeServer() {
+    const instance = require('./server.js');
+    instance.onOtp((otpData) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            const otp = typeof otpData === 'string' ? otpData : otpData.otp;
+            const payload = typeof otpData === 'string' ? otpData : JSON.stringify(otpData);
+            QRCode.toDataURL(payload, { color: { dark: '#0078d4', light: '#00000000' }, width: 200 }, (err, url) => {
+                if (!err && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('otp-update', { otp, qr: url });
+            });
+        }
+    });
+    instance.onClientConnection((connected, deviceName) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('connection-status', { connected, deviceName });
+    });
+    instance.onTelemetry((data) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('telemetry-update', data);
+    });
+    instance.onLayoutChanged((layout) => {
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('layout-data', layout);
+    });
+    return instance;
+}
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
@@ -21,7 +44,7 @@ function createWindow() {
         },
         resizable: true,
         backgroundColor: '#0c0c0e',
-        icon: path.join(__dirname, 'icon.png'),
+        icon: path.join(__dirname, 'icon.ico'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -60,7 +83,7 @@ function createWindow() {
         
         // Check for updates
         try {
-            autoUpdater.checkForUpdatesAndNotify().catch(err => {
+            autoUpdater.checkForUpdates().catch(err => {
                 console.error('Update check failed:', err);
                 if (mainWindow) mainWindow.webContents.send('update-error', err.message);
             });
@@ -84,35 +107,10 @@ if (!gotTheLock) {
     });
 
     app.on('ready', () => {
-        app.setAppUserModelId("com.windeck.app"); // Required for Windows Notifications
-        // Initialize server eagerly so IPC handlers never see a null serverInstance
-        try { 
-            serverInstance = require('./server.js'); 
-            
-            // Register connection changes and OTP updates BEFORE creating window
-            serverInstance.onOtp((otpData) => {
-                if (mainWindow && !mainWindow.isDestroyed()) {
-                    let otpStr = typeof otpData === 'string' ? otpData : otpData.otp;
-                    let qrPayload = typeof otpData === 'string' ? otpData : JSON.stringify(otpData);
-                    QRCode.toDataURL(qrPayload, { color: { dark: '#0078d4', light: '#00000000' }, width: 200 }, (err, url) => {
-                        mainWindow.webContents.send('otp-update', { otp: otpStr, qr: url });
-                    });
-                }
-            });
-
-            serverInstance.onClientConnection((connected, deviceName) => {
-                if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('connection-status', { connected, deviceName });
-            });
-
-            serverInstance.onTelemetry((data) => {
-                if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('telemetry-update', data);
-            });
-        } catch (e) { 
-            console.error('Server init failed:', e); 
-        }
+        app.setAppUserModelId("com.windeck.server");
         createWindow();
     
-    tray = new Tray(path.join(__dirname, 'icon.png')); // use the existing icon.png
+    tray = new Tray(path.join(__dirname, 'icon.ico'));
     const contextMenu = Menu.buildFromTemplate([
         { label: 'Show', click: () => { if (mainWindow) mainWindow.show(); } },
         { label: 'Quit', click: () => { app.isQuitting = true; app.quit(); } }
@@ -151,12 +149,27 @@ ipcMain.on('regenerate-otp', () => {
     }
 });
 
-ipcMain.on('create-room', (event, roomName) => {
-    if (serverInstance) {
-        serverInstance.createRoom(roomName);
-        let roomId = serverInstance.getEncodedRoomId();
-        event.reply('room-created', { id: roomId });
+ipcMain.handle('start-server', async (event, roomName) => {
+    if (serverInstance) return { id: serverInstance.getEncodedRoomId() };
+    const instance = initializeServer();
+    serverInstance = instance;
+    try {
+        await instance.startServer();
+        instance.createRoom(roomName);
+        return { id: instance.getEncodedRoomId() };
+    } catch (error) {
+        await instance.stopServer();
+        serverInstance = null;
+        delete require.cache[require.resolve('./server.js')];
+        throw error;
     }
+});
+
+ipcMain.handle('stop-server', async () => {
+    if (!serverInstance) return;
+    await serverInstance.stopServer();
+    serverInstance = null;
+    delete require.cache[require.resolve('./server.js')];
 });
 
 ipcMain.on('disconnect-client', () => {
@@ -211,10 +224,7 @@ ipcMain.handle('select-file', async () => {
 
 ipcMain.on('request-apps', async (event) => {
     try {
-        if (!serverInstance) {
-            serverInstance = require('./server.js');
-        }
-        const apps = await serverInstance.getAppList();
+        const apps = await require('./modules/appDiscovery').getStartMenuApps();
         event.reply('system-apps-data', apps || []);
     } catch (err) {
         console.error('Error fetching apps for Electron UI:', err);

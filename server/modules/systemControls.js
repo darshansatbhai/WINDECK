@@ -1,4 +1,4 @@
-﻿const { spawn, exec } = require('child_process');
+﻿const { spawn, exec, execFile } = require('child_process');
 const { shell } = require('electron');
 
 // --- Persistent PowerShell Process for instant key sends ---
@@ -69,9 +69,6 @@ function runPsCommand(cmd) {
         psProcess.stdin.write(`${cmd}\n`);
     }
 }
-
-// Start it immediately
-initPersistentShell();
 
 async function executeAction(action) {
     try {
@@ -145,18 +142,22 @@ function executeMacro(macroScript) {
 }
 
 function launchApp(exePath) {
+    if (typeof exePath !== 'string' || !exePath.trim()) return;
     if (exePath.includes(':\\') || exePath.toLowerCase().endsWith('.exe')) {
-        exec(`"${exePath}"`, (err) => {
-            if (err) console.error('Launch app error:', err);
+        shell.openPath(exePath).then((error) => {
+            if (error) console.error('Launch app error:', error);
         });
     } else {
-        exec(`explorer.exe shell:AppsFolder\\${exePath}`, (err) => {
+        execFile('explorer.exe', [`shell:AppsFolder\\${exePath}`], (err) => {
             if (err) console.error('Launch AppID error:', err);
         });
     }
 }
 
 function openUrl(url) {
+    try {
+        if (!['http:', 'https:'].includes(new URL(url).protocol)) return;
+    } catch { return; }
     shell.openExternal(url).catch(err => console.error('Open URL error:', err));
 }
 
@@ -199,6 +200,13 @@ function presentationControl(action) {
     else if (action === 'blank-screen') sendKey('B');
 }
 
-module.exports = { executeAction, executeMacro, launchApp, openUrl, moveMouse, clickMouse, scrollMouse, presentationControl };
+function stopPersistentShell() {
+    if (psProcess) {
+        psProcess.kill();
+        psProcess = null;
+    }
+}
+
+module.exports = { executeAction, executeMacro, launchApp, openUrl, moveMouse, clickMouse, scrollMouse, presentationControl, stopPersistentShell };
 
 

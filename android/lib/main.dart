@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'providers/connection_provider.dart';
 import 'providers/pages_provider.dart';
+import 'providers/appearance_provider.dart';
 import 'screens/discovery_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/intro_screen.dart';
@@ -20,6 +20,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => ConnectionProvider(navigatorKey)),
         ChangeNotifierProvider(create: (_) => PagesProvider()),
+        ChangeNotifierProvider(create: (_) => AppearanceProvider()),
       ],
       child: const WinDeckApp(),
     ),
@@ -61,7 +62,6 @@ class _WinDeckAppState extends State<WinDeckApp> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _requestNotificationPermission();
       _checkForUpdate();
     });
   }
@@ -121,83 +121,16 @@ class _WinDeckAppState extends State<WinDeckApp> {
     );
   }
 
-  Future<void> _requestNotificationPermission() async {
-    final status = await Permission.notification.status;
-    if (status.isGranted || status.isPermanentlyDenied) return;
-
-    final ctx = navigatorKey.currentContext;
-    if (ctx == null || !mounted) return;
-
-    await showDialog(
-      context: ctx,
-      barrierDismissible: false,
-      builder: (dialogCtx) => Dialog(
-        backgroundColor: const Color(0xFF161622),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 72, height: 72,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [const Color(0xFF0078d4).withValues(alpha: 0.2), const Color(0xFF0078d4).withValues(alpha: 0.05)],
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF0078d4).withValues(alpha: 0.3)),
-                ),
-                child: const Icon(Icons.notifications_active_rounded, color: Color(0xFF0078d4), size: 34),
-              ),
-              const SizedBox(height: 20),
-              const Text('Stay Connected', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20)),
-              const SizedBox(height: 10),
-              Text(
-                'WinDeck uses notifications to alert you when your phone pairs, disconnects, or receives a file.',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 13.5, height: 1.6),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pop(dialogCtx);
-                    await Permission.notification.request();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0078d4),
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
-                  ),
-                  child: const Text('Enable Notifications', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.pop(dialogCtx),
-                child: Text('Maybe Later', style: TextStyle(color: Colors.white.withValues(alpha: 0.35), fontSize: 13)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final appearance = context.watch<AppearanceProvider>();
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'WinDeck',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF1E1E2C),
-        primarySwatch: Colors.cyan,
-      ),
+      theme: appearance.preset == 'default'
+          ? ThemeData(brightness: Brightness.dark, scaffoldBackgroundColor: const Color(0xFF1E1E2C), primarySwatch: Colors.cyan)
+          : ThemeData(brightness: Brightness.dark, scaffoldBackgroundColor: appearance.background,
+              colorScheme: ColorScheme.fromSeed(seedColor: appearance.accent, brightness: Brightness.dark, surface: appearance.background)),
       initialRoute: '/',
       routes: {
         '/': (context) => !_permissionsGranted

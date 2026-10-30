@@ -3,7 +3,7 @@ const { createSessionManager } = require('windows-media-sessions');
 function startMediaMonitor(io) {
     const sessionManager = createSessionManager();
     
-    sessionManager.onSessionsChanged((sessions) => {
+    const unsubscribe = sessionManager.onSessionsChanged((sessions) => {
         if (sessions && sessions.length > 0) {
             // Find an active session (e.g., Spotify, Chrome/YouTube)
             const activeSession = sessions.find(s => s.playbackInfo && s.playbackInfo.playbackStatus === 4) || sessions[0];
@@ -21,6 +21,10 @@ function startMediaMonitor(io) {
     });
 
     console.log('[Media] Monitor started');
+    return async () => {
+        unsubscribe();
+        await sessionManager.stop();
+    };
 }
 
 module.exports = { startMediaMonitor };

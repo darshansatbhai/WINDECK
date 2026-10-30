@@ -185,6 +185,12 @@ class ConnectionProvider extends ChangeNotifier with WidgetsBindingObserver {
       onReconnectAttempt: _onReconnectAttempt,
       onReconnectError: _onReconnectError,
       onReconnectFailed: _onReconnectFailed,
+      onLayoutError: (message) {
+        final context = _navigatorKey?.currentContext;
+        if (context != null) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.redAccent));
+        }
+      },
     );
   }
 
@@ -437,6 +443,10 @@ class ConnectionProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   void requestLayout() {
     _socketService.emit('get-layout', null);
+  }
+
+  void saveLayout(List<dynamic> pages) {
+    if (_isConnected) _socketService.emit('save-layout', pages);
   }
 
   /// Emit a raw socket event — used by AirMouse, Webcam, Presentation control.

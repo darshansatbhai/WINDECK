@@ -123,7 +123,7 @@ export default function PersonaCards() {
                 A clean desk. Zero clutter.
               </h3>
               <p className="text-white/45 leading-relaxed text-[14px]">
-                No extra USB cables trailing across your workspace. No bulky plastic desk hub. Just the Android smartphone that's already resting on your charger.
+                No extra USB cables trailing across your workspace. No bulky plastic desk hub. Just the Android smartphone that&apos;s already resting on your charger.
               </p>
             </div>
           </div>

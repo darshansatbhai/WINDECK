@@ -100,13 +100,13 @@ export default function DownloadModal({
                 Automated installer with background system tray support and auto-start option.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck_Server_Setup_v2.4.0.exe · Windows 10 & 11 (64-bit)
+                WinDeck_Server_Setup.exe · Windows 10 & 11 (64-bit)
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck_Server_Setup_v2.4.0.exe")}
+                onClick={() => handleDownload("WinDeck_Server_Setup.exe")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >
@@ -148,13 +148,13 @@ export default function DownloadModal({
                 Universal Android package. Supports phones and tablets running Android 8.0 or later.
               </p>
               <div className="text-[11px] text-white/30 font-mono">
-                WinDeck_App_v2.4.0.apk · Flutter Core Engine
+                WinDeck_App.apk · Flutter Core Engine
               </div>
             </div>
 
             <div className="flex flex-col gap-2.5 pt-2">
               <button
-                onClick={() => handleDownload("WinDeck_App_v2.4.0.apk")}
+                onClick={() => handleDownload("WinDeck_App.apk")}
                 disabled={downloadStarted}
                 className="w-full h-12 rounded-xl bg-[#5E6AD2] hover:bg-[#4f5bc4] text-white font-semibold text-[14px] flex items-center justify-center gap-2 glow-btn transition-all active:scale-[0.98]"
               >

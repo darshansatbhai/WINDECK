@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/appearance_provider.dart';
 import '../models/page_model.dart';
 import 'tile_widget.dart';
 
@@ -9,11 +11,12 @@ class TileGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final columns = context.watch<AppearanceProvider>().columns;
     return LayoutBuilder(
       builder: (context, constraints) {
         bool isLandscape = constraints.maxWidth > constraints.maxHeight;
-        int crossAxisCount = isLandscape ? 4 : 2;
-        int rowCount = isLandscape ? 2 : 4;
+        int crossAxisCount = isLandscape ? (columns + 2).clamp(4, 6) : columns;
+        int rowCount = (8 / crossAxisCount).ceil();
         
         // Calculate aspect ratio to fit exactly rowCount (4) rows vertically
         double horizontalPadding = 32.0; // 16 * 2
@@ -39,7 +42,7 @@ class TileGrid extends StatelessWidget {
           itemCount:
               page.tiles.length, // Render all tiles, allowing dynamic expansion
           itemBuilder: (context, index) {
-            return TileWidget(tile: page.tiles[index]);
+            return TileWidget(pageId: page.id, tile: page.tiles[index]);
           },
         );
       },

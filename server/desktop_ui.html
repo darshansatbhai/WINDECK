@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WinDeck Dashboard</title>
     <link rel="stylesheet" href="./public/output.css">
+    <script defer src="./appearance.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
         rel="stylesheet">
@@ -79,6 +80,142 @@
 
         .view-section.active {
             display: flex;
+        }
+
+        body[data-windeck-theme] {
+            background-color: var(--wd-bg) !important;
+        }
+
+        body[data-windeck-theme] .glass-panel {
+            background: color-mix(in srgb, var(--wd-bg) 92%, white 8%) !important;
+        }
+
+        body[data-windeck-theme] [class~="text-[#0078d4]"] {
+            color: var(--wd-accent) !important;
+        }
+
+        body[data-windeck-theme] [stroke="#0078d4" i] {
+            stroke: var(--wd-accent) !important;
+        }
+
+        body[data-windeck-theme] [class~="bg-[#0078d4]"] {
+            background-color: var(--wd-accent) !important;
+            color: var(--wd-on-accent) !important;
+        }
+
+        body[data-windeck-theme] [class~="bg-[#0078d4]/10"] {
+            background-color: color-mix(in srgb, var(--wd-accent) 10%, transparent) !important;
+        }
+
+        body[data-windeck-theme] [class~="bg-[#0078d4]/20"] {
+            background-color: color-mix(in srgb, var(--wd-accent) 20%, transparent) !important;
+        }
+
+        body[data-windeck-theme] [class~="border-[#0078d4]"],
+        body[data-windeck-theme] [class~="border-[#0078d4]/20"],
+        body[data-windeck-theme] [class~="border-[#0078d4]/30"],
+        body[data-windeck-theme] [class~="border-[#0078d4]/40"] {
+            border-color: color-mix(in srgb, var(--wd-accent) 45%, transparent) !important;
+        }
+
+        .appearance-controls {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 12px;
+        }
+
+        .appearance-controls label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            color: rgba(255,255,255,.65);
+            font-size: 12px;
+        }
+
+        .appearance-controls select, .appearance-controls input {
+            min-height: 36px;
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 8px;
+            background: #161622;
+            color: white;
+            padding: 4px 8px;
+        }
+
+        .appearance-controls input[type="color"] {
+            width: 52px;
+            cursor: pointer;
+        }
+
+        .appearance-controls button {
+            min-height: 36px;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 8px;
+            background: rgba(255,255,255,.06);
+            padding: 6px 12px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .main-content, .dashboard-grid > *, .editor-assets {
+            min-width: 0;
+        }
+
+        .dashboard-grid, .dashboard-extras {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+        }
+
+        .editor-layout {
+            min-height: 680px;
+        }
+
+        .editor-tabs {
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .editor-tabs > button {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 900px) {
+            .editor-layout {
+                height: auto;
+                flex-direction: column;
+            }
+
+            .editor-preview {
+                width: 100%;
+            }
+
+            .editor-assets {
+                flex: none;
+                height: 520px;
+            }
+        }
+
+        @media (min-width: 1150px) {
+            .dashboard-grid, .dashboard-extras {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-extras {
+                grid-column: 1 / -1;
+            }
+
+            #view-settings.active {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                align-content: start;
+            }
+
+            #view-settings > h1 {
+                grid-column: 1 / -1;
+            }
         }
     </style>
 </head>
@@ -156,7 +293,7 @@
         </div>
 
         <!-- Main Content Area -->
-        <div class="flex-1 overflow-y-auto no-drag p-6 sm:p-10">
+        <div class="main-content flex-1 overflow-y-auto no-drag p-6 sm:p-10">
 
             <!-- Room Creation View -->
             <div id="view-create-room" class="view-section h-full flex-col items-center justify-center">
@@ -189,7 +326,7 @@
             <div id="view-dashboard" class="view-section flex-col gap-6">
                 <h1 class="text-2xl font-bold text-white mb-2">Dashboard</h1>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-5xl">
+                <div class="dashboard-grid">
 
                     <!-- Connection Card -->
                     <div
@@ -230,11 +367,6 @@
                             <span class="text-xs text-white/50">Manual Room ID</span>
                             <span id="encoded-room-id" class="text-sm font-bold mono text-white">---</span>
                         </div>
-                        <div class="flex flex-col items-center justify-center bg-white/5 border border-white/5 rounded-xl p-4 mb-6">
-                            <span class="text-xs text-white/50 mb-2">Scan QR to Connect</span>
-                            <img id="qr-code-img" src="" style="width: 150px; height: 150px; display: none; border-radius: 12px;" />
-                        </div>
-
                         <div class="mt-auto border-t border-white/5 pt-4">
                             <div class="flex items-center justify-between mb-4">
                                 <span class="text-xs text-white/40 uppercase tracking-widest font-bold">Status</span>
@@ -255,7 +387,7 @@
                     </div>
 
                     <!-- PC to Phone DropZone & Device Info -->
-                    <div class="flex flex-col gap-6">
+                    <div class="dashboard-extras">
 
                         <!-- PC to Phone DropZone -->
                         <div class="glass-panel rounded-3xl p-5 flex flex-col items-center justify-center border border-white/5 border-dashed bg-white/[0.02] hover:bg-white/[0.05] transition-colors relative cursor-pointer"
@@ -349,7 +481,7 @@
             </div>
 
             <!-- Editor View -->
-            <div id="view-editor" class="view-section flex-col gap-4 max-w-5xl h-[calc(100vh-80px)]">
+            <div id="view-editor" class="view-section flex-col gap-4 w-full">
                 <div class="flex items-center justify-between shrink-0">
                     <h1 class="text-2xl font-bold text-white mb-2">Layout Editor</h1>
                     <button onclick="saveLayout()"
@@ -357,9 +489,9 @@
                         & Sync</button>
                 </div>
 
-                <div class="flex gap-6 h-full min-h-0 pb-4">
+                <div class="editor-layout flex gap-6 h-full min-h-0 pb-4">
                     <!-- Phone Preview Column -->
-                    <div class="w-[300px] shrink-0 flex flex-col gap-4">
+                    <div class="editor-preview w-[300px] shrink-0 flex flex-col gap-4">
                         <div class="glass-panel p-4 rounded-3xl flex flex-col items-center shadow-lg h-full">
                             <div class="flex items-center justify-between w-full mb-4">
                                 <button onclick="prevPage()" class="p-1 text-white/50 hover:text-white">&larr;</button>
@@ -460,15 +592,21 @@
                                     </div>
                                 </div>
                             </div>
-                            <button onclick="addNewPage()"
-                                class="mt-4 text-xs font-semibold text-[#0078d4] hover:text-blue-400">+ New
-                                Page</button>
+                            <div class="mt-4 flex items-center justify-center gap-2">
+                                <select id="page-template" aria-label="Page template" class="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-xs text-white">
+                                    <option value="blank">Blank</option>
+                                    <option value="media">Media</option>
+                                    <option value="productivity">Productivity</option>
+                                </select>
+                                <button onclick="addNewPage(document.getElementById('page-template').value)"
+                                    class="text-xs font-semibold text-[#0078d4] hover:text-blue-400">+ New Page</button>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Asset Library Column -->
-                    <div class="flex-1 flex flex-col glass-panel rounded-3xl p-6 overflow-hidden h-full shadow-lg">
-                        <div class="flex items-center gap-4 border-b border-white/5 pb-4 mb-4 shrink-0">
+                    <div class="editor-assets flex-1 flex flex-col glass-panel rounded-3xl p-6 overflow-hidden h-full shadow-lg">
+                        <div class="editor-tabs flex items-center gap-4 border-b border-white/5 pb-4 mb-4 shrink-0">
                             <button onclick="setAssetTab('apps')" id="tab-apps"
                                 class="asset-tab text-sm font-semibold text-[#0078d4] border-b-2 border-[#0078d4] pb-1">PC
                                 Apps</button>
@@ -533,17 +671,39 @@
             </div>
 
             <!-- Settings View -->
-            <div id="view-settings" class="view-section flex-col gap-6 max-w-2xl">
+            <div id="view-settings" class="view-section flex-col gap-6 w-full">
                 <h1 class="text-2xl font-bold text-white mb-2">Settings</h1>
 
-                
+                <!-- APPEARANCE -->
+                <div class="glass-panel p-6 rounded-3xl border border-white/5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-[#0078d4] mb-2">Themes &amp; Customization</h3>
+                    <p class="text-xs text-white/40 mb-4">Saved on this PC. Phone appearance is set separately.</p>
+                    <div class="appearance-controls">
+                        <label>Theme
+                            <select id="appearance-preset" aria-label="Desktop theme">
+                                <option value="default">WinDeck</option>
+                                <option value="violet">Violet</option>
+                                <option value="ocean">Ocean</option>
+                                <option value="forest">Forest</option>
+                                <option value="sunset">Sunset</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </label>
+                        <label>Accent <input type="color" id="appearance-accent" aria-label="Accent color"></label>
+                        <label>Background <input type="color" id="appearance-background" aria-label="Background color"></label>
+                        <button id="appearance-apply" type="button">Apply Colors</button>
+                        <button id="appearance-reset" type="button">Reset</button>
+                    </div>
+                    <p id="appearance-error" role="status" class="text-xs text-red-400 mt-2" hidden></p>
+                </div>
+
                 <!-- PAGES MANAGEMENT -->
                 <div class="glass-panel p-6 rounded-3xl border border-white/5">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-purple-400">Pages Management</h3>
                         <button onclick="addNewPage(); showSettings();" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors font-medium">Add Page</button>
                     </div>
-                    <p class="text-xs text-white/40 mb-4">Drag to reorder. Edit names directly.</p>
+                    <p class="text-xs text-white/40 mb-4">Drag to reorder. Edit names or duplicate pages.</p>
                     <div id="settings-pages-list" class="space-y-2 max-h-60 overflow-y-auto pr-2">
                         <!-- Populated by JS -->
                     </div>
@@ -659,65 +819,6 @@
                                     cloud or external server.</div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- NOTIFICATIONS -->
-                <div class="glass-panel p-6 rounded-3xl border border-white/5">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-[#0078d4] mb-2">Notifications</h3>
-                    <p class="text-xs text-white/40 mb-4">Windows toast notifications for device events.</p>
-                    <div class="space-y-3">
-                        <label
-                            class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                            <div>
-                                <div class="text-sm text-white font-medium">Device Connected</div>
-                                <div class="text-xs text-white/40">Show a notification when a phone pairs successfully
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <input type="checkbox" id="notif-connect"
-                                    onchange="saveNotifPref('notif-connect', this.checked)" class="sr-only peer">
-                                <div onclick="document.getElementById('notif-connect').click()"
-                                    class="w-10 h-5 bg-white/10 peer-checked:bg-[#0078d4] rounded-full cursor-pointer transition-colors relative">
-                                    <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"
-                                        id="toggle-notif-connect-knob"></div>
-                                </div>
-                            </div>
-                        </label>
-                        <label
-                            class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                            <div>
-                                <div class="text-sm text-white font-medium">Device Disconnected</div>
-                                <div class="text-xs text-white/40">Show a notification when a paired phone disconnects
-                                </div>
-                            </div>
-                            <div class="relative">
-                                <input type="checkbox" id="notif-disconnect"
-                                    onchange="saveNotifPref('notif-disconnect', this.checked)" class="sr-only peer">
-                                <div onclick="document.getElementById('notif-disconnect').click()"
-                                    class="w-10 h-5 bg-white/10 peer-checked:bg-[#0078d4] rounded-full cursor-pointer transition-colors relative">
-                                    <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
-                                        id="toggle-notif-disconnect-knob"></div>
-                                </div>
-                            </div>
-                        </label>
-                        <label
-                            class="flex items-center justify-between p-3 bg-white/5 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
-                            <div>
-                                <div class="text-sm text-white font-medium">File Received</div>
-                                <div class="text-xs text-white/40">Show a notification when a file arrives from your
-                                    phone</div>
-                            </div>
-                            <div class="relative">
-                                <input type="checkbox" id="notif-file"
-                                    onchange="saveNotifPref('notif-file', this.checked)" class="sr-only peer">
-                                <div onclick="document.getElementById('notif-file').click()"
-                                    class="w-10 h-5 bg-white/10 peer-checked:bg-[#0078d4] rounded-full cursor-pointer transition-colors relative">
-                                    <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"
-                                        id="toggle-notif-file-knob"></div>
-                                </div>
-                            </div>
-                        </label>
                     </div>
                 </div>
 
@@ -1128,14 +1229,8 @@
             const savedRoomName = localStorage.getItem('windeck_last_room_name');
             document.getElementById('room-name-input').value = savedRoomName || os.hostname();
 
-            if (savedRoomName) {
-                // Auto-start server with saved room name — no button click needed on relaunch
-                createRoom();
-            } else {
-                showView('view-create-room');
-            }
+            showView('view-create-room');
 
-            loadNotifPrefs();
             initWebPresets();
 
             if (window.electronAPI && window.electronAPI.getAppVersion) {
@@ -1195,49 +1290,48 @@
             overlay.onclick = (e) => { if (e.target === overlay) close(); };
         }
 
-        function _setKnob(key, isOn) {
-            const knob = document.getElementById('toggle-' + key + '-knob');
-            if (knob) knob.style.transform = isOn ? 'translateX(20px)' : 'translateX(0)';
-        }
-
-        function saveNotifPref(key, value) {
-            localStorage.setItem('windeck_notif_' + key, value ? 'true' : 'false');
-            _setKnob(key, value);
-        }
-
-        function loadNotifPrefs() {
-            ['notif-connect', 'notif-disconnect', 'notif-file'].forEach(key => {
-                const saved = localStorage.getItem('windeck_notif_' + key);
-                const isOn = saved === null ? (key === 'notif-connect') : saved === 'true';
-                const el = document.getElementById(key);
-                if (el) el.checked = isOn;
-                _setKnob(key, isOn);
-            });
-        }
-
 
         // Override the connection status to use local storage name
         const originalStatusHandler = (event, status) => { /* handled by replacing the ipc listener body below */ };
 
 
         // Server Actions
-        function createRoom() {
+        let serverTransitioning = false;
+        async function createRoom() {
+            if (serverTransitioning || serverStarted) return;
+            serverTransitioning = true;
             const name = document.getElementById('room-name-input').value.trim() || os.hostname();
-            localStorage.setItem('windeck_last_room_name', name);
-            ipcRenderer.send('create-room', name);
-            serverStarted = true;
-            showView('view-dashboard');
+            try {
+                const room = await window.electronAPI.startServer(name);
+                localStorage.setItem('windeck_last_room_name', name);
+                document.getElementById('encoded-room-id').innerText = room.id;
+                serverStarted = true;
+                showView('view-dashboard');
+            } catch (error) {
+                alert('Could not start the server. Please check whether port 3000 is already in use.');
+                console.error('Server start failed:', error);
+            } finally {
+                serverTransitioning = false;
+            }
         }
 
         function disconnectDevice() {
             ipcRenderer.send('disconnect-client');
         }
 
-        function cancelRoom() {
-            ipcRenderer.send('disconnect-client');
-            serverStarted = false;
-            localStorage.removeItem('windeck_last_room_name');
-            showView('view-create-room');
+        async function cancelRoom() {
+            if (serverTransitioning) return;
+            serverTransitioning = true;
+            try {
+                await window.electronAPI.stopServer();
+                serverStarted = false;
+                showView('view-create-room');
+            } catch (error) {
+                alert('Could not stop the server. Please try again.');
+                console.error('Server stop failed:', error);
+            } finally {
+                serverTransitioning = false;
+            }
         }
 
         // IPC Listeners
@@ -1257,14 +1351,6 @@
             const otpChars = document.querySelectorAll(".otp-char");
             for (let i = 0; i < 6; i++) {
                 if (otpChars[i]) otpChars[i].innerText = otpStr[i] || "-";
-            }
-            
-            if (otpData && otpData.qr) {
-                const qrImg = document.getElementById('qr-code-img');
-                if (qrImg) {
-                    qrImg.src = otpData.qr;
-                    qrImg.style.display = 'block';
-                }
             }
             
             if (otpData && otpData.qr) {
@@ -1361,6 +1447,10 @@
         let currentPageIndex = 0;
         let systemApps = [];
 
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
+        }
+
         const systemControls = [
             { id: 'lock', title: 'Lock PC', icon: 'lock', payload: 'lock' },
             { id: 'sleep', title: 'Sleep', icon: 'sleep', payload: 'sleep' },
@@ -1414,10 +1504,27 @@
             };
         }
 
+        function createTemplatePage(template) {
+            const presets = {
+                media: { name: 'Media', actions: ['media-play-pause', 'media-prev', 'media-next', 'volume-down', 'volume-up', 'mute'] },
+                productivity: { name: 'Productivity', actions: ['copy', 'paste', 'undo', 'screenshot', 'show-desktop'] }
+            };
+            const preset = presets[template];
+            const page = createDefaultPage(preset ? preset.name : 'New Page', 'custom');
+            if (preset) {
+                preset.actions.forEach((action, index) => {
+                    const control = systemControls.find((item) => item.payload === action);
+                    page.tiles[index] = { id: 'tile_' + Math.random().toString(36).slice(2, 11), type: 'system', title: control.title, iconType: 'icon', iconValue: control.icon, payload: control.payload };
+                });
+            }
+            return page;
+        }
+
         function renderEditor() {
             if (layoutData.length === 0) {
                 layoutData.push(createDefaultPage("Apps", "apps"));
                 layoutData.push(createDefaultPage("System", "system"));
+                layoutData.push(createDefaultPage("Websites", "websites"));
 
                 // Pre-configured Google Meet page
                 layoutData.push(createContextPage("Google Meet", "custom", "chrome.exe", "Meet", [
@@ -1454,11 +1561,6 @@
                     else page.type = 'custom';
                 }
             });
-
-            // Ensure Websites page exists
-            if (!layoutData.find(p => p.type === 'websites')) {
-                layoutData.push(createDefaultPage("Websites", "websites"));
-            }
 
             if (currentPageIndex >= layoutData.length) currentPageIndex = layoutData.length - 1;
             if (currentPageIndex < 0) currentPageIndex = 0;
@@ -1509,7 +1611,7 @@
 
                     slot.innerHTML = `
                         ${iconHtml}
-                        <span class="text-[10px] font-medium text-white/80 text-center w-full truncate px-1 pointer-events-none">${tile.title}</span>
+                        <span class="text-[10px] font-medium text-white/80 text-center w-full truncate px-1 pointer-events-none">${escapeHtml(tile.title)}</span>
                         <button onclick="removeTile(${index})" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full text-white text-xs flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity z-10">&times;</button>
                     `;
                     // Make existing tiles hoverable to show remove button
@@ -1683,7 +1785,7 @@
                 div.ondragstart = (e) => onDragStartApp(e, i);
                 div.innerHTML = `
                     <img src="http://localhost:3000/icon?path=${encodeURIComponent(app.path)}&name=${encodeURIComponent(app.name)}" class="w-8 h-8 mb-2 object-contain pointer-events-none" onerror="this.outerHTML='<div class=\\'w-8 h-8 mb-2 flex items-center justify-center bg-white/10 rounded-xl pointer-events-none\\'>⚙️</div>'">
-                    <span class="text-[10px] font-semibold text-white/80 truncate w-full px-1 pointer-events-none" title="${app.name}">${app.name}</span>
+                    <span class="text-[10px] font-semibold text-white/80 truncate w-full px-1 pointer-events-none" title="${escapeHtml(app.name)}">${escapeHtml(app.name)}</span>
                 `;
                 container.appendChild(div);
             });
@@ -1741,14 +1843,17 @@
                 layoutData = data;
             }
             renderEditor();
+            renderSettingsPages();
         });
 
         function prevPage() { if (currentPageIndex > 0) { currentPageIndex--; renderEditor(); } }
         function nextPage() { if (currentPageIndex < layoutData.length - 1) { currentPageIndex++; renderEditor(); } }
-        function addNewPage() {
-            layoutData.push(createDefaultPage("New Page", "custom"));
+        function addNewPage(template = 'blank') {
+            layoutData.push(createTemplatePage(template));
             currentPageIndex = layoutData.length - 1;
             renderEditor();
+            renderSettingsPages();
+            saveLayout();
         }
         function deleteCurrentPage() {
             if (layoutData.length <= 1) return alert('Cannot delete the last page.');
@@ -1759,7 +1864,9 @@
             }
         }
         function updatePageName() {
-            layoutData[currentPageIndex].name = document.getElementById('page-name-input').value;
+            const value = document.getElementById('page-name-input').value.trim();
+            if (value) layoutData[currentPageIndex].name = value;
+            else document.getElementById('page-name-input').value = layoutData[currentPageIndex].name;
         }
 
         function saveLayout() {
@@ -1960,8 +2067,11 @@
                             <line x1="4" y1="16" x2="20" y2="16"></line>
                         </svg>
                     </div>
-                    <input type="text" value="${page.name}" onchange="updateSettingsPageName(${i}, this.value)"
+                    <input type="text" value="${escapeHtml(page.name)}" onchange="updateSettingsPageName(${i}, this.value)"
                         class="flex-1 bg-transparent text-sm font-medium text-white focus:outline-none focus:border-b border-white/20 transition-colors">
+                    <button onclick="duplicateSettingsPage(${i})" title="Duplicate page" aria-label="Duplicate page" class="text-white/40 hover:text-white p-2 transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"></path></svg>
+                    </button>
                     <button onclick="deleteSettingsPage(${i})" class="text-red-400/50 hover:text-red-400 p-2 transition-colors ${layoutData.length <= 1 ? 'hidden' : ''}">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1973,8 +2083,27 @@
         }
 
         function updateSettingsPageName(idx, newName) {
-            layoutData[idx].name = newName;
+            const name = newName.trim();
+            if (!name) { renderSettingsPages(); return; }
+            layoutData[idx].name = name;
             renderEditor();
+            saveLayout();
+        }
+
+        function duplicateSettingsPage(idx) {
+            const original = layoutData[idx];
+            if (!original) return;
+            const copy = {
+                ...original,
+                id: 'page_' + Math.random().toString(36).slice(2, 11),
+                name: original.name + ' Copy',
+                type: 'custom', linkedExe: null, titlePattern: null,
+                tiles: original.tiles.map((tile) => ({ ...tile, id: 'tile_' + Math.random().toString(36).slice(2, 11) }))
+            };
+            layoutData.splice(idx + 1, 0, copy);
+            currentPageIndex = idx + 1;
+            renderEditor();
+            renderSettingsPages();
             saveLayout();
         }
 
@@ -2017,15 +2146,6 @@
             }
         };
 
-        // Override addNewPage to auto-save and update settings
-        const originalAddNewPage = addNewPage;
-        window.addNewPage = function() {
-            layoutData.push(createDefaultPage("New Page", "custom"));
-            currentPageIndex = layoutData.length - 1;
-            renderEditor();
-            renderSettingsPages();
-            saveLayout();
-        };
     </script>
 </body>
 </html>

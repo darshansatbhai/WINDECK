@@ -30,5 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         return ips;
     },
     selectFile: () => ipcRenderer.invoke('select-file'),
+    startServer: (name) => ipcRenderer.invoke('start-server', name),
+    stopServer: () => ipcRenderer.invoke('stop-server'),
     getAppVersion: () => ipcRenderer.invoke('get-app-version')
 });

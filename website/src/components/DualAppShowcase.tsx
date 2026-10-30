@@ -40,7 +40,7 @@ export default function DualAppShowcase() {
                 Instant 6-digit OTP Pairing
               </p>
               <p className="text-[13px] text-white/50">
-                Launch the Windows app, open Android app on the same Wi-Fi, enter the 6-digit code once and you're paired.
+                Launch the Windows app, open Android app on the same Wi-Fi, enter the 6-digit code once and you&apos;re paired.
               </p>
             </div>
           </div>
@@ -217,11 +217,13 @@ export default function DualAppShowcase() {
       </section>
 
       {/* Interactive Download Dialog */}
-      <DownloadModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        defaultPlatform={modalPlatform}
-      />
+      {modalOpen && (
+        <DownloadModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          defaultPlatform={modalPlatform}
+        />
+      )}
     </>
   );
 }

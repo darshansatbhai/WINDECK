@@ -32,7 +32,7 @@ export default function PrivacySection() {
               <div>
                 <h4 className="text-[16px] font-semibold text-white mb-1">Local Network Only</h4>
                 <p className="text-[13px] text-white/40 leading-relaxed">
-                  Traffic stays inside your router's LAN. Even if your internet goes down, WinDeck keeps working.
+                  Traffic stays inside your router&apos;s LAN. Even if your internet goes down, WinDeck keeps working.
                 </p>
               </div>
             </div>

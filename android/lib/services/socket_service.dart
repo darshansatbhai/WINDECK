@@ -58,6 +58,7 @@ class SocketService {
     Function(int attemptNumber)? onReconnectAttempt,
     Function(dynamic error)? onReconnectError,
     Function()? onReconnectFailed,
+    Function(String message)? onLayoutError,
   }) async {
     serverIp = ip;
     serverPort = port;
@@ -81,6 +82,10 @@ class SocketService {
     _socket?.on('foreground-app-changed', (data) => onWindowUpdate(Map<String, dynamic>.from(_decryptData(data))));
     _socket?.on('clipboard-update', (data) => onClipboardUpdate(_decryptData(data).toString()));
     _socket?.on('file-offer', (data) => onFileOffer(_decryptData(data).toString()));
+    _socket?.on('layout-error', (data) {
+      final payload = _decryptData(data);
+      if (payload is Map) onLayoutError?.call(payload['message']?.toString() ?? 'Could not save layout on PC.');
+    });
 
     if (_onSyncLayoutCallback != null) {
       _socket?.on('sync-layout', (data) => _onSyncLayoutCallback!(_decryptData(data) as List));

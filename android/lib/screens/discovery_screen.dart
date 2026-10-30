@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../providers/appearance_provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -676,10 +677,11 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final appearance = context.watch<AppearanceProvider>();
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0C0C14),
+        backgroundColor: appearance.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -719,7 +721,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                         style: TextStyle(
                           fontSize: 48,
                           fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0078d4),
+                          color: appearance.accent,
                           height: 0.8,
                           letterSpacing: -1,
                         ),
@@ -769,9 +771,9 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                         icon: const Icon(Icons.edit_rounded, size: 18),
                                         label: const Text('Can\'t find your PC? Enter IP manually'),
                                         style: TextButton.styleFrom(
-                                          foregroundColor: const Color(0xFF0078d4),
+                                          foregroundColor: appearance.accent,
                                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                          backgroundColor: const Color(0xFF0078d4).withValues(alpha: 0.1),
+                                          backgroundColor: appearance.accent.withValues(alpha: 0.1),
                                         ),
                                       ),
                                     ],
@@ -800,10 +802,10 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                                     width: 48,
                                     height: 48,
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0078d4).withValues(alpha: 0.1),
+                                      color: appearance.accent.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(14),
                                     ),
-                                    child: const Icon(Icons.desktop_windows_rounded, color: Color(0xFF0078d4)),
+                                    child: Icon(Icons.desktop_windows_rounded, color: appearance.accent),
                                   ),
                                   title: Text(
                                     server['name'] ?? 'Windows PC',
@@ -839,8 +841,8 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                     icon: const Icon(Icons.qr_code_scanner_rounded, size: 18, color: Colors.white),
                     label: const Text('Scan QR instead', style: TextStyle(fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0078d4).withOpacity(0.2),
-                      foregroundColor: const Color(0xFF0078d4),
+                      backgroundColor: appearance.accent.withValues(alpha: 0.2),
+                      foregroundColor: appearance.accent,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

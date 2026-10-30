@@ -6,11 +6,14 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../models/tile_model.dart';
 import '../providers/connection_provider.dart';
+import '../providers/appearance_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'package:vibration/vibration.dart';
 import '../screens/air_mouse_screen.dart';
 import '../screens/camera_stream_screen.dart';
+import '../screens/tile_editor_sheet.dart';
+import '../providers/pages_provider.dart';
 
 class IconMapper {
   static const Map<String, IconData> _map = {
@@ -91,7 +94,8 @@ class IconMapper {
 }
 class TileWidget extends StatefulWidget {
   final TileModel tile;
-  const TileWidget({super.key, required this.tile});
+  final String pageId;
+  const TileWidget({super.key, required this.pageId, required this.tile});
 
   @override
   State<TileWidget> createState() => _TileWidgetState();
@@ -144,8 +148,10 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
         await _audioPlayer.play(AssetSource('sounds/tap.wav'));
       } catch (_) {}
     }
+    if (!mounted) return;
 
     if (widget.tile.type == 'empty') {
+      _showTileEditor();
       return;
     }
 
@@ -269,7 +275,24 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
       _showSliderSheet();
       return;
     }
-    // No-op for other tiles since editing is now PC-only
+    _showTileEditor();
+  }
+
+  void _showTileEditor() {
+    if (!context.read<ConnectionProvider>().isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reconnect to your PC to edit tiles.')));
+      return;
+    }
+    final pages = context.read<PagesProvider>();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => TileEditorSheet(tile: widget.tile, onSave: (tile) {
+        if (!context.read<ConnectionProvider>().isConnected) return false;
+        return pages.updateTile(widget.pageId, tile);
+      }),
+    );
   }
 
   void _onVerticalDragUpdate(DragUpdateDetails details) {
@@ -402,6 +425,10 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
                   ),
                 ],
               ),
+              TextButton(
+                onPressed: () { Navigator.pop(ctx); _showTileEditor(); },
+                child: const Text('Edit Shortcut'),
+              ),
             ],
           ),
         );
@@ -424,6 +451,7 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final serverIp = context.read<ConnectionProvider>().serverIp;
+    final appearance = context.watch<AppearanceProvider>();
     
     String iconUrl = '';
     String faviconUrl = '';
@@ -455,14 +483,14 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
     Color tileBorderColor;
     if (_isGestureTile) {
       final isVol = widget.tile.payload == 'volume';
-      tileColor = (isVol ? const Color(0xFF0078d4) : const Color(0xFFf59e0b)).withValues(alpha: 0.12);
-      tileBorderColor = (isVol ? const Color(0xFF0078d4) : const Color(0xFFf59e0b)).withValues(alpha: 0.25);
+      tileColor = (isVol ? appearance.accent : const Color(0xFFf59e0b)).withValues(alpha: 0.12);
+      tileBorderColor = (isVol ? appearance.accent : const Color(0xFFf59e0b)).withValues(alpha: 0.25);
     } else if (isEmpty) {
       tileColor = Colors.white.withValues(alpha: 0.03);
       tileBorderColor = Colors.white.withValues(alpha: 0.08);
     } else {
-      tileColor = const Color(0xFF0078d4).withValues(alpha: 0.10);
-      tileBorderColor = const Color(0xFF0078d4).withValues(alpha: 0.20);
+      tileColor = appearance.accent.withValues(alpha: appearance.tileOpacity);
+      tileBorderColor = appearance.accent.withValues(alpha: (appearance.tileOpacity * 2).clamp(0.1, 0.6));
     }
 
     return GestureDetector(
@@ -475,7 +503,7 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
         child: Container(
           decoration: BoxDecoration(
             color: tileColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(appearance.tileRadius),
             border: isEmpty 
               ? Border.all(color: tileBorderColor, width: 1, style: BorderStyle.solid)
               : Border.all(color: tileBorderColor, width: 1.5),
@@ -545,7 +573,7 @@ class _TileWidgetState extends State<TileWidget> with SingleTickerProviderStateM
                 ),
               ),
               // Show label for all non-empty tiles
-              if (!isEmpty) ...[
+              if (!isEmpty && appearance.showLabels) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10, left: 8, right: 8),
                   child: Text(

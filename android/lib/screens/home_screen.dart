@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/connection_provider.dart';
 import '../providers/pages_provider.dart';
+import '../providers/appearance_provider.dart';
 import '../widgets/tile_grid.dart';
 import '../widgets/tile_widget.dart'; // For IconMapper
 
@@ -21,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLandscape = false;
   Timer? _fadeTimer;
   bool _isFabVisible = true;
+  late final PagesProvider _pagesProvider;
 
   void _resetFadeTimer() {
     if (!_isFullscreen) return;
@@ -75,6 +77,8 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     final conn = context.read<ConnectionProvider>();
     final pages = context.read<PagesProvider>();
+    _pagesProvider = pages;
+    pages.setSyncCallback(conn.saveLayout);
 
     _pageController = PageController(initialPage: pages.currentPageIndex);
 
@@ -171,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _pagesProvider.setSyncCallback(null);
     _fadeTimer?.cancel();
     _pageController.dispose();
     super.dispose();
@@ -198,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final conn = context.watch<ConnectionProvider>();
     final pages = context.watch<PagesProvider>();
+    final appearance = context.watch<AppearanceProvider>();
 
     // Gap 3: Auto-navigate to discovery screen when silent re-auth fails
     if (conn.connectionPhase == ConnectionPhase.pairingRequired) {
@@ -227,42 +233,28 @@ class _HomeScreenState extends State<HomeScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: const Color(0xFF0A0A12),
+        backgroundColor: appearance.homeBackground,
         appBar: _isFullscreen ? null : AppBar(
-          backgroundColor: const Color(0xFF0A0A12),
+          backgroundColor: appearance.homeBackground,
           elevation: 0,
           scrolledUnderElevation: 0,
           centerTitle: false,
           title: Row(
             children: [
               // WinDeck Logo
-              Container(
-                width: 28, height: 28,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF0078d4), Color(0xFF2196F3)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Text('W', style: TextStyle(
-                    color: Colors.white, 
-                    fontSize: 14, 
-                    fontWeight: FontWeight.w900,
-                  )),
-                ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset('assets/windeck_icon.png', width: 28, height: 28, fit: BoxFit.cover),
               ),
               const SizedBox(width: 10),
               RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   children: [
-                    TextSpan(text: 'win', style: TextStyle(
+                    const TextSpan(text: 'win', style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white,
                     )),
                     TextSpan(text: 'deck', style: TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0078d4),
+                      fontSize: 18, fontWeight: FontWeight.w800, color: appearance.accent,
                     )),
                   ],
                 ),
@@ -389,17 +381,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF0078d4).withValues(alpha: 0.15) : Colors.transparent,
+                        color: isSelected ? appearance.accent.withValues(alpha: 0.15) : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF0078d4).withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06),
+                          color: isSelected ? appearance.accent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.06),
                           width: 1,
                         ),
                       ),
                       child: Text(
                         pages.pages[index].name,
                         style: TextStyle(
-                          color: isSelected ? const Color(0xFF0078d4) : Colors.white38,
+                          color: isSelected ? appearance.accent : Colors.white38,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                           fontSize: 13,
                         ),
@@ -452,7 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: isSelected ? 20 : 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF0078d4) : Colors.white.withValues(alpha: 0.15),
+                          color: isSelected ? appearance.accent : Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       );
